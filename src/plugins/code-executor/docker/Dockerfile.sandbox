@@ -1,0 +1,35 @@
+FROM node:22-slim
+
+# System dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    python3 python3-pip python3-venv \
+    git curl wget unzip zip jq \
+    ca-certificates \
+    proxychains4 \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Bun (system-wide)
+RUN curl -fsSL https://bun.sh/install | BUN_INSTALL=/usr/local bash
+
+# Install Claude Code CLI + global-agent (global)
+# Pin major version to avoid breaking changes on rebuild.
+# Update periodically: npm view @anthropic-ai/claude-code version
+ARG CLAUDE_CODE_VERSION="1"
+RUN npm install -g @anthropic-ai/claude-code@${CLAUDE_CODE_VERSION} global-agent@3
+
+# Create coder user (node:22-slim ships with node:1000, replace it)
+RUN userdel -r node 2>/dev/null || true \
+    && useradd -m -u 1000 -s /bin/bash coder \
+    && mkdir -p /workspace \
+    && chown coder:coder /workspace
+
+# Entrypoint
+COPY entrypoint.sh /usr/local/bin/entrypoint.sh
+RUN chmod +x /usr/local/bin/entrypoint.sh
+
+ENV NODE_PATH=/usr/local/lib/node_modules
+USER coder
+WORKDIR /workspace
+
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
+CMD ["tail", "-f", "/dev/null"]

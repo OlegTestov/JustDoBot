@@ -1,0 +1,132 @@
+bot:
+  name: "JustDoBot"
+  language: "en"                  # en, ru, ar, zh, de, es, fr, hi, it, ja, ko, pl, pt, tr, uk
+  timezone: "UTC"                 # IANA timezone (auto-detected by web setup, e.g. "Europe/Moscow")
+
+messenger:
+  type: "telegram"
+  token: "${TELEGRAM_BOT_TOKEN}"         # From .env — get from @BotFather
+  allowed_users: ["${ALLOWED_USER_ID}"]  # Your Telegram user ID (number as string)
+  allowed_chats: []               # Group chat IDs to allow (empty = DMs only)
+  group_mode: "mention_only"      # In groups: "mention_only" or "all_messages"
+  mode: "polling"                 # Only "polling" supported currently
+
+ai_engine:
+  type: "claude-agent-sdk"
+  model: "claude-sonnet-4-5"      # claude-opus-4-6 | claude-sonnet-4-5 | claude-haiku-4-5
+  max_turns: 3                    # Max tool-use rounds per query (higher = slower, more capable)
+  allowed_tools: ["Read", "Grep", "Glob", "Write", "Edit"]  # Main chat assistant tools
+  timeout_seconds: 60             # Abort query after N seconds
+  streaming: true                 # Show response as it generates (recommended)
+
+database:
+  type: "sqlite"
+  path: "./data/bot.db"
+
+context:
+  max_tokens: 12000               # Total context budget (tokens) for each query
+  session_timeout_hours: 6        # Start new session after N hours of inactivity
+
+streaming:
+  enabled: true
+  edit_debounce_ms: 1000          # Min interval between Telegram message edits
+  thinking_timeout_ms: 2000       # Show "Thinking..." after N ms without response
+
+logging:
+  level: "info"                   # debug | info | warn | error
+  format: "pretty"                # "pretty" for dev, "json" for production/Docker
+
+# Optional: Semantic search via OpenAI embeddings
+# Improves memory and vault retrieval quality (~$0.02 per 1M tokens)
+# embedding:
+#   enabled: true
+#   model: "text-embedding-3-small"
+#   dimensions: 1536
+
+# Optional: Obsidian vault integration
+# Bot indexes .md files and searches them during conversations
+# vault:
+#   enabled: true
+#   type: "obsidian"
+#   path: "${VAULT_PATH}"
+#   include: []                   # Empty = all folders; populated by setup wizard
+#   exclude: []                   # Dot-dirs auto-excluded by indexer
+#   watch_mode: "poll"            # "poll" (Docker-safe) or "native" (local dev)
+#   poll_interval_seconds: 60
+
+# Optional: Proactive check-ins (Stage 4)
+# Bot periodically checks Gmail, Calendar, goals and sends notifications when important
+# proactive:
+#   enabled: true
+#   check_interval_minutes: 5     # How often to check (1-120)
+#   cooldown_minutes: 15          # Min minutes between sent messages
+#   reminder_cooldown_minutes: 180 # Per-goal cooldown before re-reminding
+#   defer_minutes: 5              # Retry delay when queue is busy
+#   quiet_hours:
+#     start: "22:00"              # No messages after this time
+#     end: "08:00"                # Resume messages after this time
+
+# Optional: Google integration for proactive check-ins
+# Requires OAuth credentials from Google Cloud Console
+# collectors:
+#   google:
+#     enabled: true
+#     client_id: "${GOOGLE_CLIENT_ID}"
+#     client_secret: "${GOOGLE_CLIENT_SECRET}"
+#     gmail:
+#       enabled: true
+#     calendar:
+#       enabled: true
+
+# Optional: Voice messages (Stage 5)
+# STT transcribes voice messages, TTS generates audio responses
+# voice:
+#   stt:
+#     enabled: true
+#     type: "gemini"                              # gemini (Gemini 2.5 Flash)
+#     model: "gemini-2.5-flash"
+#   tts:
+#     enabled: true
+#     type: "elevenlabs"                          # elevenlabs | gemini
+#     voice_id: "${ELEVENLABS_VOICE_ID}"          # ElevenLabs voice ID
+#     voice_name: "Kore"                          # Gemini TTS voice (30 variants)
+#     model: "eleven_multilingual_v2"             # ElevenLabs model
+#     gemini_model: "gemini-2.5-flash-preview-tts" # Gemini TTS model
+#     auto_reply: true                            # true: auto-TTS for voice msgs. false: [Listen] button
+#     max_text_length: 4096                       # Max chars for TTS (longer responses truncated)
+#   # twilio:
+#   #   enabled: true
+#   #   phone_number: "${TWILIO_PHONE_NUMBER}"      # Twilio FROM number (your Twilio number)
+#   #   user_phone_number: "${USER_PHONE_NUMBER}"   # Your phone number to call TO (e.g. "+1234567890")
+#   #   urgency_threshold: 8                        # Proactive call when urgency >= this (1-10)
+
+# Optional: Code Agent sandbox (Stage 6)
+# Runs Claude Code CLI inside an isolated Docker container.
+# Requires: Docker installed, ~/.claude credentials present.
+# code_execution:
+#   enabled: true
+#   model: "sonnet"                        # Model for coding agent (sonnet/opus/haiku)
+#   allowed_tools: ["Read", "Grep", "Glob", "Write", "Edit", "Bash"]  # Coding agent tools
+#   max_turns: 50                          # Max Claude Code turns per task
+#   max_concurrent_tasks: 1                # Parallel tasks (1 = serial)
+#   max_projects: 10                       # Max active projects
+#   timeout_minutes: 10                    # Max time per task
+#   append_system_prompt: ""               # Extra instructions for coding agent (has sensible default)
+#   resources:
+#     memory: "4g"                         # Container RAM limit
+#     cpus: "2"                            # Container CPU limit
+#     pids_limit: 1024                     # Max processes
+#   allowed_domains:                       # Network whitelist (via Squid proxy)
+#     - ".anthropic.com"
+#     - ".npmjs.org"
+#     - ".npmjs.com"
+#     - ".pypi.org"
+#     - ".pythonhosted.org"
+#     - ".github.com"
+#     - ".githubusercontent.com"
+#     - ".bun.sh"
+#   git:
+#     enabled: false
+#     user_name: "JustDoBot"
+#     user_email: "bot@example.com"
+#     token: "${GITHUB_TOKEN}"

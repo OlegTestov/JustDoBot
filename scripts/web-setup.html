@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>JustDoBot Setup</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <div class="container">
+    <!-- Header -->
+    <div class="header">
+      <div class="lang-switcher" id="lang-switcher">
+        <button class="lang-toggle" id="lang-toggle" onclick="toggleLangDropdown()">
+          <span class="lang-flag" id="lang-current-flag"></span>
+          <span class="lang-name" id="lang-current-name">English</span>
+          <svg class="lang-chevron" width="12" height="12" viewBox="0 0 16 16" fill="currentColor">
+            <path d="M4.427 7.427l3.396 3.396a.25.25 0 00.354 0l3.396-3.396A.25.25 0 0011.396 7H4.604a.25.25 0 00-.177.427z"/>
+          </svg>
+        </button>
+        <div class="lang-dropdown" id="lang-dropdown"></div>
+      </div>
+      <h1 data-i18n="header.title">JustDoBot Setup</h1>
+      <p data-i18n="header.subtitle">Configure your Telegram AI assistant</p>
+    </div>
+
+    <!-- Step Indicator -->
+    <div class="step-indicator">
+      <div class="step-circle active" id="circle-1"><span>1</span></div>
+      <div class="step-line" id="line-1-2"></div>
+      <div class="step-circle" id="circle-2"><span>2</span></div>
+      <div class="step-line" id="line-2-3"></div>
+      <div class="step-circle" id="circle-3"><span>3</span></div>
+      <div class="step-line" id="line-3-4"></div>
+      <div class="step-circle" id="circle-4"><span>4</span></div>
+      <div class="step-line" id="line-4-5"></div>
+      <div class="step-circle" id="circle-5"><span>5</span></div>
+      <div class="step-line" id="line-5-6"></div>
+      <div class="step-circle" id="circle-6"><span>6</span></div>
+    </div>
+    <div class="step-labels">
+      <div class="step-label active" id="label-1" data-i18n="steps.essentials">Essentials</div>
+      <div class="step-label" id="label-2" data-i18n="steps.model">AI Model</div>
+      <div class="step-label" id="label-3" data-i18n="steps.optional">Optional</div>
+      <div class="step-label" id="label-4" data-i18n="steps.proactive">Proactive</div>
+      <div class="step-label" id="label-5" data-i18n="steps.codeAgent">Code Agent</div>
+      <div class="step-label" id="label-6" data-i18n="steps.save">Save</div>
+    </div>
+
+    <!-- Step Content -->
+    <div class="step-content">
+
+      <!-- ════ Step 1: Required ════ -->
+      <div class="step-panel active" id="step-1">
+        <h2 class="step-title">
+          <span data-i18n="step1.title">Essentials</span>
+          <span class="badge-required" data-i18n="badge.required">Required</span>
+        </h2>
+        <p class="step-subtitle" data-i18n="step1.subtitle">Core settings to get your bot running</p>
+
+        <!-- Claude Auth Status -->
+        <div class="claude-auth-status" id="claude-auth-status" style="display:none">
+          <span class="claude-auth-text" id="claude-auth-text"></span>
+          <a class="claude-auth-help-link" id="claude-auth-help" href="#" onclick="showClaudeAuthHelp(event)" style="display:none" data-i18n="claudeAuth.helpLink">How to fix</a>
+        </div>
+
+        <div class="field">
+          <label for="token" data-i18n="step1.token.label">Telegram Bot Token</label>
+          <div class="hint" data-i18n-html="step1.token.hint">
+            Get one from <a href="https://t.me/BotFather" target="_blank" rel="noopener">@BotFather</a>
+          </div>
+          <div class="input-row">
+            <input type="text" id="token" placeholder="123456:ABC-DEF1234ghIkl-zyx57W2v1u123ew11" autocomplete="off" spellcheck="false">
+            <button class="btn btn-secondary btn-sm" id="btn-verify" onclick="verifyToken()" disabled data-i18n="btn.verify">Verify</button>
+          </div>
+          <div class="field-error" id="token-error"></div>
+          <div class="field-success" id="token-success"></div>
+        </div>
+
+        <div class="field">
+          <label for="user-id" data-i18n="step1.userid.label">Telegram User ID</label>
+          <div class="hint" data-i18n-html="step1.userid.hint">
+            Your numeric ID &mdash; send any message to <a href="https://t.me/userinfobot" target="_blank" rel="noopener">@userinfobot</a> to get it
+          </div>
+          <input type="text" id="user-id" placeholder="123456789" autocomplete="off" inputmode="numeric">
+          <div class="field-error" id="userid-error"></div>
+        </div>
+
+        <div class="field">
+          <label for="language" data-i18n="step1.language.label">Bot Language</label>
+          <div class="hint" data-i18n="step1.language.hint">The language your bot will respond in</div>
+          <select id="language">
+            <option value="ar" data-i18n="step1.language.ar">العربية — Arabic</option>
+            <option value="zh" data-i18n="step1.language.zh">中文 — Chinese</option>
+            <option value="en" selected data-i18n="step1.language.en">English</option>
+            <option value="fr" data-i18n="step1.language.fr">Français — French</option>
+            <option value="de" data-i18n="step1.language.de">Deutsch — German</option>
+            <option value="hi" data-i18n="step1.language.hi">हिन्दी — Hindi</option>
+            <option value="it" data-i18n="step1.language.it">Italiano — Italian</option>
+            <option value="ja" data-i18n="step1.language.ja">日本語 — Japanese</option>
+            <option value="ko" data-i18n="step1.language.ko">한국어 — Korean</option>
+            <option value="pl" data-i18n="step1.language.pl">Polski — Polish</option>
+            <option value="pt" data-i18n="step1.language.pt">Português — Portuguese</option>
+            <option value="ru" data-i18n="step1.language.ru">Русский — Russian</option>
+            <option value="es" data-i18n="step1.language.es">Español — Spanish</option>
+            <option value="tr" data-i18n="step1.language.tr">Türkçe — Turkish</option>
+            <option value="uk" data-i18n="step1.language.uk">Українська — Ukrainian</option>
+          </select>
+        </div>
+
+        <div class="nav-buttons">
+          <div class="nav-left"></div>
+          <div class="nav-right">
+            <button class="btn btn-primary" id="btn-next-1" disabled onclick="goToStep(2)" data-i18n="btn.next">Next</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ════ Step 2: AI Model ════ -->
+      <div class="step-panel" id="step-2">
+        <h2 class="step-title" data-i18n="step2.title">AI Model</h2>
+        <p class="step-subtitle" data-i18n="step2.subtitle">Choose the Claude model for your bot</p>
+
+        <div class="model-cards">
+          <div class="model-card selected" data-model="claude-sonnet-4-5" onclick="selectModel(this)">
+            <div class="model-radio"></div>
+            <div class="model-info">
+              <div class="model-name" data-i18n="step2.sonnet.name">Sonnet</div>
+              <div class="model-id">claude-sonnet-4-5</div>
+              <div class="model-desc" data-i18n="step2.sonnet.desc">Fast and smart &mdash; great balance of speed and capability</div>
+            </div>
+            <span class="badge-recommended" data-i18n="badge.recommended">Recommended</span>
+          </div>
+          <div class="model-card" data-model="claude-opus-4-6" onclick="selectModel(this)">
+            <div class="model-radio"></div>
+            <div class="model-info">
+              <div class="model-name" data-i18n="step2.opus.name">Opus</div>
+              <div class="model-id">claude-opus-4-6</div>
+              <div class="model-desc" data-i18n="step2.opus.desc">Most capable model, best for complex reasoning</div>
+            </div>
+          </div>
+          <div class="model-card" data-model="claude-haiku-4-5" onclick="selectModel(this)">
+            <div class="model-radio"></div>
+            <div class="model-info">
+              <div class="model-name" data-i18n="step2.haiku.name">Haiku</div>
+              <div class="model-id">claude-haiku-4-5</div>
+              <div class="model-desc" data-i18n="step2.haiku.desc">Fastest and most affordable option</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="nav-buttons">
+          <div class="nav-left">
+            <button class="btn btn-secondary" onclick="goToStep(1)" data-i18n="btn.back">Back</button>
+          </div>
+          <div class="nav-right">
+            <button class="btn btn-primary" onclick="goToStep(3)" data-i18n="btn.next">Next</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ════ Step 3: Optional ════ -->
+      <div class="step-panel" id="step-3">
+        <h2 class="step-title">
+          <span data-i18n="step3.title">Integrations</span>
+          <span class="badge-optional" data-i18n="badge.optional">Optional</span>
+        </h2>
+        <p class="step-subtitle" data-i18n="step3.subtitle">Optional features &mdash; you can configure these later</p>
+
+        <div class="toggle-row">
+          <div class="toggle-info">
+            <h3 data-i18n="step3.embeddings.title">Semantic Search</h3>
+            <p data-i18n="step3.embeddings.desc">Enable AI-powered memory search using OpenAI embeddings</p>
+          </div>
+          <label class="toggle-switch">
+            <input type="checkbox" id="toggle-embeddings" onchange="toggleSection('embeddings')">
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+        <div class="toggle-detail" id="detail-embeddings">
+          <div class="field">
+            <label for="openai-key" data-i18n="step3.embeddings.key.label">OpenAI API Key</label>
+            <div class="hint" data-i18n="step3.embeddings.key.hint">Required for embedding generation</div>
+            <input type="password" id="openai-key" placeholder="sk-..." autocomplete="off" spellcheck="false">
+          </div>
+        </div>
+
+        <div class="toggle-row">
+          <div class="toggle-info">
+            <h3 data-i18n="step3.vault.title">Obsidian Vault</h3>
+            <p data-i18n="step3.vault.desc">Connect your Obsidian vault for knowledge search</p>
+          </div>
+          <label class="toggle-switch">
+            <input type="checkbox" id="toggle-vault" onchange="toggleSection('vault')">
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+        <div class="toggle-detail" id="detail-vault">
+          <div id="detected-vaults" class="detected-vaults" style="display:none"></div>
+          <div class="field">
+            <label for="vault-path" data-i18n="step3.vault.path.label">Vault Path</label>
+            <div class="hint" data-i18n="step3.vault.path.hint">Absolute path to your Obsidian vault directory</div>
+            <input type="text" id="vault-path" data-i18n-placeholder="step3.vault.path.placeholder" placeholder="/Users/you/Documents/MyVault" autocomplete="off" spellcheck="false">
+          </div>
+        </div>
+
+        <div class="toggle-row">
+          <div class="toggle-info">
+            <h3 data-i18n="step3.voice.title">Voice Messages</h3>
+            <p data-i18n="step3.voice.desc">Enable speech-to-text and text-to-speech for voice messages</p>
+          </div>
+          <label class="toggle-switch">
+            <input type="checkbox" id="toggle-voice" onchange="toggleSection('voice')">
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+        <div class="toggle-detail" id="detail-voice">
+          <div class="field">
+            <label for="gemini-api-key" data-i18n="step3.voice.gemini.label">Gemini API Key</label>
+            <div class="hint" data-i18n="step3.voice.gemini.hint">Required for speech-to-text (Gemini 2.5 Flash)</div>
+            <input type="password" id="gemini-api-key" placeholder="AIza..." autocomplete="off" spellcheck="false">
+          </div>
+          <div class="field">
+            <label data-i18n="step3.voice.tts.label">Text-to-Speech Provider</label>
+            <div class="hint" data-i18n="step3.voice.tts.hint">Choose how the bot generates voice replies</div>
+            <select id="voice-tts-type" onchange="toggleVoiceTtsType()">
+              <option value="elevenlabs" data-i18n="step3.voice.tts.elevenlabs">ElevenLabs (Premium)</option>
+              <option value="gemini" data-i18n="step3.voice.tts.gemini">Gemini (Low cost, requires ffmpeg)</option>
+            </select>
+          </div>
+          <div id="detail-elevenlabs">
+            <div class="field">
+              <label for="elevenlabs-api-key" data-i18n="step3.voice.elevenlabs.key.label">ElevenLabs API Key</label>
+              <input type="password" id="elevenlabs-api-key" autocomplete="off" spellcheck="false">
+            </div>
+            <div class="field">
+              <label for="elevenlabs-voice-id" data-i18n="step3.voice.elevenlabs.voice.label">Voice ID</label>
+              <div class="hint" data-i18n="step3.voice.elevenlabs.voice.hint">Get from ElevenLabs dashboard</div>
+              <input type="text" id="elevenlabs-voice-id" autocomplete="off" spellcheck="false">
+            </div>
+          </div>
+          <div class="field">
+            <label class="toggle-inline">
+              <input type="checkbox" id="voice-auto-reply" checked>
+              <span data-i18n="step3.voice.autoReply.label">Auto voice reply</span>
+            </label>
+            <div class="hint" data-i18n="step3.voice.autoReply.hint">Automatically send voice response to voice messages</div>
+          </div>
+        </div>
+
+        <div class="nav-buttons">
+          <div class="nav-left">
+            <button class="btn btn-secondary" onclick="goToStep(2)" data-i18n="btn.back">Back</button>
+          </div>
+          <div class="nav-right">
+            <button class="btn btn-ghost" onclick="goToStep(4)" data-i18n="btn.skip">Skip</button>
+            <button class="btn btn-primary" onclick="goToStep(4)" data-i18n="btn.next">Next</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ════ Step 4: Proactive ════ -->
+      <div class="step-panel" id="step-4">
+        <h2 class="step-title">
+          <span data-i18n="step4.title">Proactive Behavior</span>
+          <span class="badge-optional" data-i18n="badge.optional">Optional</span>
+        </h2>
+        <p class="step-subtitle" data-i18n="step4.subtitle">Let the bot check in with you proactively</p>
+
+        <div class="toggle-row">
+          <div class="toggle-info">
+            <h3 data-i18n="step4.proactive.title">Proactive Check-ins</h3>
+            <p data-i18n="step4.proactive.desc">Bot periodically checks your calendar, email, and goals, then decides if you need a nudge</p>
+          </div>
+          <label class="toggle-switch">
+            <input type="checkbox" id="toggle-proactive" onchange="toggleSection('proactive')">
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+        <div class="toggle-detail" id="detail-proactive">
+          <div class="field">
+            <label data-i18n="step4.proactive.interval.label">Check Interval (minutes)</label>
+            <div class="hint" data-i18n="step4.proactive.interval.hint">How often the bot gathers data and decides whether to message you</div>
+            <input type="number" id="proactive-interval" value="30" min="5" max="180">
+          </div>
+          <div class="field">
+            <label data-i18n="step4.proactive.cooldown.label">Cooldown (minutes)</label>
+            <div class="hint" data-i18n="step4.proactive.cooldown.hint">Minimum minutes between proactive messages</div>
+            <input type="number" id="proactive-cooldown" value="60" min="5" max="1440">
+          </div>
+          <div class="field">
+            <label data-i18n="step4.proactive.quiet.label">Quiet Hours</label>
+            <div class="hint" data-i18n="step4.proactive.quiet.hint">No proactive messages during this period</div>
+            <div class="time-range-row">
+              <input type="time" id="quiet-start" value="22:00">
+              <span class="time-range-sep">&mdash;</span>
+              <input type="time" id="quiet-end" value="08:00">
+            </div>
+          </div>
+        </div>
+
+        <div class="toggle-row">
+          <div class="toggle-info">
+            <h3 data-i18n="step4.google.title">Google Integration</h3>
+            <p data-i18n="step4.google.desc">Connect Gmail and Google Calendar as data sources</p>
+          </div>
+          <label class="toggle-switch">
+            <input type="checkbox" id="toggle-google" onchange="toggleSection('google')">
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+        <div class="toggle-detail" id="detail-google">
+          <div class="field">
+            <label for="google-client-id" data-i18n="step4.google.clientId.label">Google Client ID</label>
+            <div class="hint" data-i18n-html="step4.google.clientId.hint">From <a href="https://console.cloud.google.com/apis/credentials" target="_blank" rel="noopener">Google Cloud Console</a></div>
+            <input type="text" id="google-client-id" placeholder="123456.apps.googleusercontent.com" autocomplete="off" spellcheck="false">
+          </div>
+          <div class="field">
+            <label for="google-client-secret" data-i18n="step4.google.clientSecret.label">Google Client Secret</label>
+            <input type="password" id="google-client-secret" placeholder="GOCSPX-..." autocomplete="off" spellcheck="false">
+          </div>
+
+          <button class="btn btn-secondary" id="btn-google-connect" onclick="connectGoogle()">
+            <span data-i18n="step4.google.connect">Connect Google</span>
+          </button>
+          <div id="google-status" class="status-indicator"></div>
+
+          <div class="checkbox-group" id="google-services" style="display:none">
+            <label><input type="checkbox" id="google-gmail" checked> Gmail</label>
+            <label><input type="checkbox" id="google-calendar" checked> Calendar</label>
+          </div>
+        </div>
+
+        <div class="nav-buttons">
+          <div class="nav-left">
+            <button class="btn btn-secondary" onclick="goToStep(3)" data-i18n="btn.back">Back</button>
+          </div>
+          <div class="nav-right">
+            <button class="btn btn-ghost" onclick="goToStep(5)" data-i18n="btn.skip">Skip</button>
+            <button class="btn btn-primary" onclick="goToStep(5)" data-i18n="btn.next">Next</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ════ Step 5: Code Agent ════ -->
+      <div class="step-panel" id="step-5">
+        <h2 class="step-title">
+          <span data-i18n="step5.title">Code Agent</span>
+          <span class="badge-optional" data-i18n="badge.optional">Optional</span>
+        </h2>
+        <p class="step-subtitle" data-i18n="step5.subtitle">Let the bot write code in an isolated Docker sandbox</p>
+
+        <div class="toggle-row">
+          <div class="toggle-info">
+            <h3 data-i18n="step5.codeAgent.title">Code Agent</h3>
+            <p data-i18n="step5.codeAgent.desc">Write code, build projects, and run tests in an isolated Docker sandbox</p>
+          </div>
+          <label class="toggle-switch">
+            <input type="checkbox" id="toggle-codeAgent" onchange="toggleSection('codeAgent')">
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+        <div class="toggle-detail" id="detail-codeAgent">
+          <div class="field">
+            <label data-i18n="step5.codeAgent.model.label">Coding Model</label>
+            <div class="hint" data-i18n="step5.codeAgent.model.hint">The Claude model used for coding tasks (independent of your chat model)</div>
+            <select id="code-agent-model">
+              <option value="sonnet" selected data-i18n="step5.codeAgent.model.sonnet">Sonnet (Recommended)</option>
+              <option value="opus" data-i18n="step5.codeAgent.model.opus">Opus (Most capable)</option>
+              <option value="haiku" data-i18n="step5.codeAgent.model.haiku">Haiku (Fastest)</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="code-agent-turns" data-i18n="step5.codeAgent.turns.label">Max Turns</label>
+            <div class="hint" data-i18n="step5.codeAgent.turns.hint">Maximum Claude Code tool-use rounds per task (5–200)</div>
+            <input type="number" id="code-agent-turns" value="50" min="5" max="200">
+          </div>
+          <div class="field">
+            <label for="code-agent-timeout" data-i18n="step5.codeAgent.timeout.label">Timeout (minutes)</label>
+            <div class="hint" data-i18n="step5.codeAgent.timeout.hint">Maximum time per coding task (1–60)</div>
+            <input type="number" id="code-agent-timeout" value="10" min="1" max="60">
+          </div>
+          <div id="docker-status" class="status-indicator"></div>
+          <div id="docker-install-guide" class="docker-install-guide" style="display:none"></div>
+        </div>
+
+        <div class="nav-buttons">
+          <div class="nav-left">
+            <button class="btn btn-secondary" onclick="goToStep(4)" data-i18n="btn.back">Back</button>
+          </div>
+          <div class="nav-right">
+            <button class="btn btn-ghost" onclick="goToStep(6)" data-i18n="btn.skip">Skip</button>
+            <button class="btn btn-primary" onclick="goToStep(6)" data-i18n="btn.next">Next</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ════ Step 6: Save & Run ════ -->
+      <div class="step-panel" id="step-6">
+        <h2 class="step-title" data-i18n="step6.title">Save &amp; Run</h2>
+        <p class="step-subtitle" data-i18n="step6.subtitle">Review your configuration and launch</p>
+
+        <!-- Config Summary -->
+        <div class="config-summary" id="config-summary"></div>
+
+        <!-- Pre-save Validation Results -->
+        <div class="doctor-results" id="presave-results"></div>
+
+        <!-- Save Button -->
+        <div class="save-section" id="save-section">
+          <button class="btn btn-success" id="btn-save" onclick="saveConfig()" data-i18n="btn.save">
+            Save Configuration
+          </button>
+        </div>
+
+        <!-- Success Panel (hidden until save) -->
+        <div class="success-panel" id="success-panel">
+          <div class="success-icon"></div>
+          <h3 data-i18n="step6.success.title">Configuration Saved</h3>
+          <p data-i18n="step6.success.subtitle">Your bot is ready to run.</p>
+
+          <div class="run-commands" style="text-align:center; margin-bottom:16px">
+            <h4 data-i18n="step6.run.terminal.heading">Before you start</h4>
+            <p style="color:var(--text-secondary); margin:0; line-height:1.6" data-i18n="step6.run.terminal.instructions">Close your current terminal window and open a new one.<br>This is needed so your system recognizes the tools we just installed.</p>
+          </div>
+
+          <div class="run-commands">
+            <h4 data-i18n="step6.run.local.heading">Then, in the new terminal run:</h4>
+            <div class="cmd-block">
+              <div>
+                <div class="cmd-label" data-i18n="step6.run.local.label">Start the bot</div>
+                <span class="cmd-text">cd ~/JustDoBot && bun run start</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="run-commands">
+            <h4 data-i18n="step6.run.docker.heading">Run with Docker</h4>
+            <div class="cmd-block">
+              <div>
+                <div class="cmd-label" data-i18n="step6.run.docker.label">Build and start in background</div>
+                <span class="cmd-text">cd ~/JustDoBot && bun run docker</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Doctor -->
+          <div class="doctor-section">
+            <button class="btn btn-secondary" id="btn-doctor" onclick="runDoctor()" data-i18n="btn.doctor">
+              Run Diagnostics
+            </button>
+            <div class="doctor-results" id="doctor-results"></div>
+          </div>
+        </div>
+
+        <div class="nav-buttons" id="nav-step-6">
+          <div class="nav-left">
+            <button class="btn btn-secondary" onclick="goToStep(5)" data-i18n="btn.back">Back</button>
+          </div>
+          <div class="nav-right"></div>
+        </div>
+      </div>
+
+    </div><!-- /step-content -->
+  </div><!-- /container -->
+
+  <!-- Toast -->
+  <div class="toast" id="toast"></div>
+
+  <!-- Loading Overlay -->
+  <div class="loading-overlay" id="loading-overlay">
+    <div class="spinner"></div>
+  </div>
+
+  <!-- Claude Auth Help Modal -->
+  <div class="modal-overlay" id="claude-auth-modal">
+    <div class="modal-content">
+      <button class="modal-close" onclick="closeClaudeAuthHelp()">&times;</button>
+      <h3 data-i18n="claudeAuth.modal.title">Claude Authentication Required</h3>
+      <p data-i18n-html="claudeAuth.modal.description">JustDoBot requires Claude CLI credentials to function. Without them, <strong>the bot cannot start</strong>.</p>
+      <div class="modal-steps">
+        <div class="modal-step">
+          <span class="modal-step-num">1</span>
+          <div>
+            <strong data-i18n="claudeAuth.modal.step1.title">Open a terminal</strong>
+            <p data-i18n="claudeAuth.modal.step1.desc">Open Terminal.app (macOS) or your terminal emulator (Linux)</p>
+          </div>
+        </div>
+        <div class="modal-step">
+          <span class="modal-step-num">2</span>
+          <div>
+            <strong data-i18n="claudeAuth.modal.step2.title">Run claude login</strong>
+            <div class="cmd-block"><span class="cmd-text">claude login</span></div>
+          </div>
+        </div>
+        <div class="modal-step">
+          <span class="modal-step-num">3</span>
+          <div>
+            <strong data-i18n="claudeAuth.modal.step3.title">Complete browser flow</strong>
+            <p data-i18n="claudeAuth.modal.step3.desc">Your browser will open. Log in to your Anthropic account and authorize Claude Code.</p>
+          </div>
+        </div>
+        <div class="modal-step">
+          <span class="modal-step-num">4</span>
+          <div>
+            <strong data-i18n="claudeAuth.modal.step4.title">Return here and re-check</strong>
+            <p data-i18n="claudeAuth.modal.step4.desc">After login completes, click the button below to verify.</p>
+          </div>
+        </div>
+      </div>
+      <button class="btn btn-primary" id="btn-recheck-claude" onclick="recheckClaudeAuth()" data-i18n="claudeAuth.recheck">Re-check Claude Auth</button>
+    </div>
+  </div>
+
+  <script src="/app.js"></script>
+</body>
+</html>

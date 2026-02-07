@@ -1,0 +1,13 @@
+node_modules/
+.env
+data/
+secrets/
+workspace/
+backups/
+config.yaml
+bun.lockb
+dist/
+site/node_modules/
+*.log
+.claude/
+spec/

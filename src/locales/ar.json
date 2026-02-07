@@ -1,0 +1,137 @@
+{
+  "cmd.start.greeting": "مرحباً! أنا {botName}، مساعدك الشخصي بالذكاء الاصطناعي.",
+  "cmd.start.whatICan": "ما أستطيع فعله:",
+  "cmd.start.featureMemory": "تحدث بشكل طبيعي — أتذكر الأشياء المهمة تلقائياً",
+  "cmd.start.featureGoals": "تتبع أهدافك والمواعيد النهائية",
+  "cmd.start.featureVault": "ابحث في Obsidian vault الخاص بك",
+  "cmd.start.sendMessage": "أرسل لي رسالة للبدء!",
+  "cmd.start.commandsHeader": "الأوامر:",
+
+  "cmd.help.title": "الأوامر المتاحة:",
+  "cmd.help.start": "/start — رسالة الترحيب",
+  "cmd.help.help": "/help — عرض المساعدة",
+  "cmd.help.clear": "/clear — مسح المحادثة والبدء من جديد",
+  "cmd.help.cancel": "/cancel — إلغاء الرد الحالي",
+  "cmd.help.goals": "/goals — عرض الأهداف النشطة",
+  "cmd.help.memory": "/memory [بحث] — عرض أو البحث في الذكريات",
+  "cmd.help.forget": "/forget <id> — حذف ذكرى",
+  "cmd.help.vault": "/vault [بحث] — البحث في vault",
+  "cmd.help.note": "/note <نص> — إنشاء ملاحظة",
+  "cmd.help.reindex": "/reindex — إعادة فهرسة vault",
+  "cmd.help.backup": "/backup — إنشاء نسخة احتياطية",
+  "cmd.help.footer": "أرسل أي رسالة نصية للتحدث معي!",
+
+  "cmd.clear.done": "تم مسح المحادثة. نبدأ من جديد!",
+  "cmd.cancel.done": "جارٍ إلغاء الرد الحالي...",
+
+  "cmd.goals.unavailable": "تتبع الأهداف غير متاح.",
+  "cmd.goals.empty": "لا توجد أهداف نشطة. أخبرني عن أهدافك في الدردشة وسأتابعها!",
+  "cmd.goals.title": "الأهداف النشطة:",
+  "cmd.goals.deadline": "حتى {deadline}",
+  "cmd.goals.error": "خطأ في تحميل الأهداف.",
+
+  "cmd.memory.unavailable": "الذاكرة غير متاحة.",
+  "cmd.memory.noMatch": "لم يتم العثور على ذكريات لـ \"{query}\".",
+  "cmd.memory.empty": "لا توجد ذكريات محفوظة بعد. تحدث معي وسأتذكر الأشياء المهمة!",
+  "cmd.memory.titleSearch": "ذكريات لـ \"{query}\":",
+  "cmd.memory.titleAll": "ذكرياتك:",
+  "cmd.memory.error": "خطأ في تحميل الذكريات.",
+
+  "cmd.forget.unavailable": "إدارة الذاكرة غير متاحة.",
+  "cmd.forget.usage": "الاستخدام: /forget <id>\n/memory — لرؤية المعرّفات.",
+  "cmd.forget.done": "تم حذف الذكرى #{id}.",
+  "cmd.forget.error": "خطأ في حذف الذكرى.",
+
+  "cmd.vault.unavailable": "تكامل vault غير مفعّل.",
+  "cmd.vault.indexed": "تمت فهرسة vault: {count} جزء.\nالاستخدام: /vault <استعلام بحث>",
+  "cmd.vault.noMatch": "لم يتم العثور على مستندات لـ \"{query}\".",
+  "cmd.vault.title": "نتائج vault لـ \"{query}\":",
+  "cmd.vault.error": "خطأ في البحث في vault.",
+
+  "cmd.note.usage": "الاستخدام: /note <نص>\nينشئ ملاحظة في Temp Notes/",
+  "cmd.note.created": "تم إنشاء الملاحظة: {path}",
+  "cmd.note.error": "خطأ في إنشاء الملاحظة.",
+
+  "cmd.reindex.progress": "جارٍ إعادة فهرسة vault...",
+  "cmd.reindex.done": "تمت إعادة فهرسة vault: {count} جزء.",
+  "cmd.reindex.error": "خطأ في إعادة فهرسة vault.",
+
+  "cmd.backup.unavailable": "قاعدة البيانات غير متاحة.",
+  "cmd.backup.unsupported": "النسخ الاحتياطي غير مدعوم لهذا النوع من قواعد البيانات.",
+  "cmd.backup.done": "تم إنشاء النسخة الاحتياطية:\n- قاعدة البيانات: {dbPath}\n- JSON: {jsonPath} ({memories} ذكريات، {goals} أهداف)",
+  "cmd.backup.error": "خطأ في إنشاء النسخة الاحتياطية.",
+
+  "streaming.thinking": "أفكر...",
+  "streaming.cancelled": "_ملغى_",
+
+  "media.unsupported": "لا أستطيع معالجة هذا النوع من الملفات. المدعومة: صور، PDF، DOCX، TXT، MD",
+  "media.pdfError": "فشل في قراءة ملف PDF.",
+  "media.docxError": "فشل في قراءة ملف DOCX.",
+
+  "error.general": "حدث خطأ أثناء معالجة رسالتك.",
+  "error.auth": "\n\nالسبب: مشكلة في المصادقة. قم بتشغيل `claude login` على الخادم.",
+  "error.rateLimit": "\n\nالسبب: تم الوصول إلى حد الطلبات. يرجى الانتظار بضع دقائق.",
+  "error.timeout": "\n\nالسبب: انتهت مهلة الطلب. جرب رسالة أقصر.",
+  "error.retry": " يرجى المحاولة مرة أخرى.",
+
+  "auth.private": "هذا البوت خاص.\n\nمعرّف Telegram الخاص بك: {userId}\nإذا كنت المالك، أضف هذا المعرّف إلى ALLOWED_USER_ID في .env",
+
+  "rateLimit.exceeded": "تم الوصول إلى الحد ({max} رسالة/ساعة). انتظر ~{minutes} دقيقة.",
+
+  "prompt.vault.fragment": "جزء",
+  "prompt.vault.untitled": "بدون عنوان",
+  "prompt.vault.intro": "أجزاء ذات صلة من Obsidian vault:",
+  "prompt.vault.instruction": "استخدم هذه الأجزاء للإجابة. أشر هكذا: \"في الملاحظة [[العنوان]]...\"",
+
+  "cmd.quiet.enabled": "تم تفعيل الوضع الهادئ لمدة {hours} ساعات. لن تصلك رسائل استباقية خلال هذه الفترة.",
+  "cmd.quiet.disabled": "تم إيقاف الوضع الهادئ.",
+  "cmd.quiet.usage": "الاستخدام: /quiet [ساعات] أو /quiet off\nمثال: /quiet 8",
+  "cmd.quiet.error": "خطأ في ضبط الوضع الهادئ.",
+  "cmd.quiet.unavailable": "الوضع الهادئ غير متاح.",
+  "cmd.help.quiet": "/quiet [ساعات] — تفعيل الوضع الهادئ (الافتراضي 4 ساعات)",
+  "cmd.help.status": "/status — Bot status dashboard",
+  "cmd.help.voice": "Send voice messages — I understand speech",
+
+  "cmd.start.featureVoice": "Send voice messages — I understand speech",
+
+  "cmd.status.title": "Bot Status",
+  "cmd.status.uptime": "Uptime",
+  "cmd.status.messagesTotal": "Total messages",
+  "cmd.status.messagesToday": "Messages today",
+  "cmd.status.activeGoals": "Active goals",
+  "cmd.status.memories": "Memories",
+  "cmd.status.vaultDocs": "Vault docs indexed",
+  "cmd.status.lastCheckIn": "Last check-in",
+  "cmd.status.minutesAgo": "min ago",
+  "cmd.status.plugins": "Plugins",
+  "cmd.status.error": "Error fetching status.",
+
+  "voice.transcribing": "جارٍ تحويل الرسالة...",
+  "voice.error": "Failed to process voice message. Please try sending text instead.",
+  "voice.skipButton": "Skip audio ✕",
+  "voice.listenButton": "🔊 Listen",
+  "voice.skipConfirm": "Audio skipped",
+  "voice.generating": "Generating audio...",
+  "voice.unavailable": "Voice response not available",
+
+  "prompt.checkIn.label": "عمليات التحقق الأخيرة",
+
+  "cmd.help.projects": "/projects — مشاريع البرمجة النشطة",
+  "cmd.help.projectStop": "/project_stop <اسم> — إلغاء المهمة الجارية",
+  "cmd.help.projectDelete": "/project_delete <اسم> — حذف المشروع",
+  "cmd.projects.empty": "لا توجد مشاريع بعد. اطلب مني بناء شيء ما!",
+  "cmd.projectStop.done": "تم إلغاء المهمة: {name}",
+  "cmd.projectStop.notRunning": "لا توجد مهمة جارية لـ \"{name}\".",
+  "cmd.projectStop.usage": "الاستخدام: /project_stop <اسم-المشروع>",
+  "cmd.projectDelete.done": "تم حذف المشروع \"{name}\".",
+  "cmd.projectDelete.notFound": "المشروع \"{name}\" غير موجود.",
+  "cmd.projectDelete.usage": "الاستخدام: /project_delete <اسم-المشروع>",
+  "code.delete": "\ud83d\uddd1 حذف",
+  "code.unavailable": "تنفيذ الكود غير متاح. قم بتفعيله في config.yaml.",
+  "code.dockerUnavailable": "Code Agent مُفعّل لكن فشل في البدء: {error}\n\nتأكد من تثبيت Docker وتشغيله، ثم أعد تشغيل البوت.",
+  "code.completed": "تم!",
+  "code.failed": "فشل",
+  "code.confirmDelete": "\u26a0\ufe0f تأكيد الحذف",
+  "code.cancelDelete": "\u21a9\ufe0f إلغاء",
+  "cmd.start.featureCode": "بناء المشاريع وتشغيل الكود في بيئة معزولة"
+}
