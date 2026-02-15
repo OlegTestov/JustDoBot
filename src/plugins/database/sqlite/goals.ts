@@ -128,7 +128,7 @@ export class GoalRepository {
   }
 
   searchGoalsByTitleFTS(query: string): Goal[] {
-    const safeQuery = query.replace(/['"*]/g, " ").trim();
+    const safeQuery = query.replace(/['"*():]/g, " ").trim();
     if (!safeQuery) return [];
     try {
       return this.stmtSearchFTS.all({

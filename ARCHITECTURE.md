@@ -51,7 +51,8 @@ JustDoBot/
 │   │   ├── error-handler.ts        # Exponential backoff retry
 │   │   ├── logger.ts              # Pino logger singleton
 │   │   ├── gating-query.ts        # Claude structured output gating (Zod + JSON schema)
-│   │   └── proactive-scheduler.ts # Interval-based proactive check-in scheduler
+│   │   ├── proactive-scheduler.ts # Interval-based proactive check-in scheduler
+│   │   └── format-date.ts        # Locale-aware date/time formatting helper
 │   │
 │   ├── plugins/
 │   │   ├── ai-engines/claude-sdk/
@@ -128,19 +129,22 @@ JustDoBot/
 │   │       └── index.ts            # OpenAI text-embedding-3-small provider
 │   │
 │   └── types/
-│       └── pdf-parse.d.ts
+│       ├── pdf-parse.d.ts
+│       └── mammoth.d.ts
 │
 ├── tests/
 │   ├── core/
+│   │   ├── config.test.ts                # 8 tests (YAML config loading + Zod validation)
 │   │   ├── context-builder.test.ts       # 11 tests
 │   │   ├── context-builder-vault.test.ts # 5 tests
 │   │   ├── hybrid-search.test.ts         # 5 tests
 │   │   ├── message-splitter.test.ts      # 8 tests
 │   │   ├── safe-markdown.test.ts         # 6 tests
 │   │   ├── session-manager.test.ts       # 5 tests
-│   │   ├── proactive-scheduler.test.ts   # 7 tests (isQuietHours)
+│   │   ├── proactive-scheduler.test.ts   # 26 tests (isQuietHours, scheduler lifecycle, collectors)
 │   │   ├── gating-query.test.ts          # 8 tests (schema + runGatingQuery)
-│   │   └── message-queue-lock.test.ts    # 3 tests (queryLock mutex)
+│   │   ├── message-queue-lock.test.ts    # 3 tests (queryLock mutex)
+│   │   └── message-queue-stress.test.ts  # 4 tests (concurrent load, error isolation)
 │   ├── plugins/
 │   │   ├── mcp-memory.test.ts            # 18 tests
 │   │   ├── memory-repo.test.ts           # 21 tests
@@ -148,15 +152,15 @@ JustDoBot/
 │   │   ├── vault-chunker.test.ts         # 8 tests
 │   │   ├── vault-repo.test.ts            # 11 tests
 │   │   ├── vault-indexer.test.ts         # 7 tests
-│   │   ├── check-ins.test.ts            # 11 tests (CheckInRepository + quiet mode)
+│   │   ├── check-ins.test.ts            # 16 tests (CheckInRepository + quiet mode)
 │   │   ├── gemini-stt.test.ts           # 6 tests
 │   │   ├── elevenlabs-tts.test.ts       # 5 tests
 │   │   ├── gemini-tts.test.ts           # 5 tests
-│   │   ├── voice-handler.test.ts        # 6 tests
+│   │   ├── voice-handler.test.ts        # 7 tests
 │   │   ├── callbacks.test.ts            # 6 tests
 │   │   ├── twilio-calls.test.ts         # 5 tests
 │   │   ├── code-task-repo.test.ts      # 3 tests (CodeTaskRepository CRUD)
-│   │   ├── project-repo.test.ts        # 10 tests (ProjectRepository CRUD + status)
+│   │   ├── project-repo.test.ts        # 11 tests (ProjectRepository CRUD + status)
 │   │   ├── squid-config.test.ts        # 4 tests (Squid whitelist config generation)
 │   │   └── ndjson-parser.test.ts       # 9 tests (Claude stream-json parsing)
 │   ├── commands/
@@ -175,7 +179,7 @@ JustDoBot/
 │   ├── doctor.ts                      # Diagnostics: 12 base checks (14 with Code Agent enabled)
 │   ├── re-embed.ts                    # Backfill embeddings for existing data
 │   └── i18n/                          # Setup wizard translations (15 languages)
-│       ├── en.json                    # English — source of truth (~162 keys)
+│       ├── en.json                    # English — source of truth (~193 keys)
 │       ├── ru.json                    # Russian
 │       ├── zh.json                    # Chinese (Simplified)
 │       ├── es.json                    # Spanish
@@ -191,6 +195,8 @@ JustDoBot/
 │       ├── pl.json                    # Polish
 │       └── uk.json                    # Ukrainian
 │
+├── lib/
+│   └── libsqlite3.dylib              # Pre-built SQLite with loadExtension (macOS universal binary)
 ├── install.sh                         # One-command installer (curl | bash)
 ├── docker-entrypoint.sh               # Docker credentials bootstrap (CLAUDE_CREDENTIALS_B64 → ~/.claude)
 ├── README.md
@@ -630,7 +636,15 @@ Docker socket. Volume paths must reference the **host filesystem**, not the bot 
 
 Code executor is initialized **after** `registry.initAll()` in a separate try/catch.
 If sandbox setup fails (no Docker, no credentials, etc.), the bot continues working
-normally — Code Agent feature is simply disabled.
+normally — Code Agent feature is simply disabled. A startup notification is sent to
+all allowed users via Telegram explaining the error.
+
+### Delegation Pattern
+
+The system prompt instructs Claude to **always delegate** coding tasks to the code agent
+via `start_coding_task` — never read, edit, or modify files in `./workspace/code/` directly.
+This prevents the host Claude from wasting turns (and budget) on file operations that the
+sandboxed code agent handles more effectively.
 
 ---
 
@@ -711,8 +725,11 @@ no results: +25%. If no check-in logs: +5%.
 3. **First chunk** — sends as new Telegram message
 4. **Subsequent chunks** — edits existing message (debounced at configurable interval)
 5. **Finalize** — converts Markdown to Telegram HTML, splits if >4096 chars
-6. **Fallback** — if HTML parse fails, sends plain text
-7. **Error handling** — catches "message is not modified" silently
+6. **Empty response** — if `fullText` is empty after all turns (tool-only response), deletes the "Thinking..." placeholder instead of editing with empty text
+7. **Fallback** — if HTML parse fails, sends plain text
+8. **Error handling** — catches "message is not modified" silently
+
+> **Note:** `fullText` is only updated when `extractTextFromAssistant()` returns non-empty text, preserving the last meaningful response across multi-turn tool-use sequences.
 
 ---
 
@@ -724,7 +741,8 @@ Three ways to install, from simplest to manual:
 ```bash
 curl -fsSL https://justdobot.com/install.sh | bash
 ```
-Auto-installs Bun, Claude CLI, dependencies, then opens the web setup panel.
+Auto-installs Bun, Node.js (direct download from nodejs.org if no Homebrew), Claude CLI,
+dependencies, then opens the web setup panel. Claude authentication is handled in the web panel (not in the terminal).
 
 ### 2. Web setup panel
 ```bash
@@ -736,9 +754,11 @@ Bun HTTP server on port 19380 (auto-increments if busy). Serves a 6-step SPA wiz
 3. **Optional** — Semantic search (OpenAI), Obsidian vault, Voice (STT/TTS)
 4. **Proactive** — Check-in toggle, interval/cooldown/quiet hours, Google OAuth
 5. **Code Agent** — Enable toggle, model choice, max turns, timeout
-6. **Save & Run** — Config summary, save, diagnostics
+6. **Save & Run** — Pre-save validation, config summary, diagnostics
 
-API routes: `GET /api/status`, `POST /api/validate-token`, `POST /api/save`, `GET /api/doctor`, `GET /api/detect-vaults`, `GET /api/lang/:code`, `POST /api/google-auth-url`, `GET /oauth/callback`, `GET /api/google-status`, `GET /api/docker-status`
+API routes: `GET /api/status` (includes `projectDir`), `POST /api/validate-token`, `POST /api/save`, `POST /api/pre-validate`, `GET /api/doctor`, `GET /api/detect-vaults`, `GET /api/lang/:code`, `POST /api/google-auth-url`, `GET /oauth/callback`, `GET /api/google-status`, `GET /api/docker-status`, `GET /api/platform-info`
+
+After saving, success panel shows terminal instructions ("close terminal, open new one") and run commands with the full project directory path (`cd /path/to/JustDoBot && bun run start`).
 
 ### 3. Terminal wizard
 ```bash
@@ -792,9 +812,9 @@ messenger:
 ai_engine:
   type: "claude-agent-sdk"
   model: "claude-sonnet-4-5"
-  max_turns: 3
+  max_turns: 10
   allowed_tools: ["Read", "Grep", "Glob", "Write", "Edit"]
-  timeout_seconds: 60
+  timeout_seconds: 120
   streaming: true
 
 database:
@@ -945,7 +965,7 @@ All user-facing bot strings are localized via a `Translator` function.
 The web setup panel has its own independent translation system:
 
 **Architecture:**
-- Flat JSON files in `scripts/i18n/` — `en.json` is source of truth (~162 keys), other files mirror its structure
+- Flat JSON files in `scripts/i18n/` — `en.json` is source of truth (~193 keys), other files mirror its structure
 - Key format: `"section.element.property"` (e.g. `"step1.token.label"`, `"error.save.failed"`)
 - Dynamic values via `{variable}` placeholders (e.g. `"Valid! Bot: @{username}"`)
 - English is injected at serve time into `app.js` (zero-latency), other languages fetched via `GET /api/lang/:code` and cached client-side
@@ -969,11 +989,12 @@ The web setup panel has its own independent translation system:
 
 Apple's built-in SQLite blocks `loadExtension()`. The solution:
 
-1. `Database.setCustomSQLite("/opt/homebrew/opt/sqlite/lib/libsqlite3.dylib")`
-   must be called **before** any `new Database()`.
+1. `Database.setCustomSQLite(path)` must be called **before** any `new Database()`.
 2. `SqliteMemoryProvider.ensureCustomSQLite()` handles this as a static one-time call.
-3. Setup wizard and installer auto-detect and install via `brew install sqlite`.
-4. On Linux/Docker, Bun's built-in SQLite supports extensions natively.
+3. Search order: Homebrew paths → bundled `lib/libsqlite3.dylib` (universal binary, arm64 + x86_64).
+4. Installer tries `brew install sqlite` if Homebrew is available; bundled fallback covers machines without Homebrew.
+5. `existsSync()` check before `setCustomSQLite()` prevents `dlopen` crash on missing files.
+6. On Linux/Docker, Bun's built-in SQLite supports extensions natively.
 
 ---
 
@@ -1039,30 +1060,32 @@ Formatter: 2-space indent, 100-char line width, double quotes, semicolons.
 
 | File                              | Tests | Coverage                                     |
 |-----------------------------------|-------|----------------------------------------------|
+| `config.test.ts`                  | 8     | YAML config loading, Zod validation, env substitution |
 | `context-builder.test.ts`         | 11    | Budget allocation, redistribution, check-ins  |
 | `context-builder-vault.test.ts`   | 5     | Vault pass, budget, redistribution, null provider |
 | `hybrid-search.test.ts`           | 5     | Keyword, semantic, recency scoring           |
 | `message-splitter.test.ts`        | 8     | Chunking, Unicode, edge cases                |
 | `safe-markdown.test.ts`           | 6     | MarkdownV2 escaping                          |
 | `session-manager.test.ts`         | 5     | UUID generation, timeout, clear              |
-| `proactive-scheduler.test.ts`     | 7     | isQuietHours: boundaries, spanning, precision |
+| `proactive-scheduler.test.ts`     | 26    | isQuietHours, scheduler lifecycle, collectors |
 | `gating-query.test.ts`            | 8     | Schema validation, mock engine, error fallback |
 | `message-queue-lock.test.ts`      | 3     | queryLock mutex, sequential processing       |
+| `message-queue-stress.test.ts`    | 4     | Concurrent load, error isolation             |
 | `mcp-memory.test.ts`              | 18    | MCP tool logic: save/edit/delete memory, save/edit/close goal |
 | `memory-repo.test.ts`             | 21    | Memory + Goal CRUD, editGoal, FTS5 re-index, soft delete |
 | `vault-parser.test.ts`            | 12    | Frontmatter, title, wiki-links, edge cases   |
 | `vault-chunker.test.ts`           | 8     | Header split, paragraph split, overlap       |
 | `vault-repo.test.ts`              | 11    | Upsert, hash check, FTS, delete, stale chunks |
 | `vault-indexer.test.ts`           | 7     | Scan, filter, incremental, include/exclude   |
-| `check-ins.test.ts`               | 11    | CheckInRepo CRUD, quiet mode, ISO datetime   |
+| `check-ins.test.ts`               | 16    | CheckInRepo CRUD, quiet mode, ISO datetime   |
 | `gemini-stt.test.ts`              | 6     | STT transcription, formats, error handling   |
 | `elevenlabs-tts.test.ts`          | 5     | ElevenLabs TTS synthesis, config, errors     |
 | `gemini-tts.test.ts`              | 5     | Gemini TTS synthesis, ffmpeg, errors         |
-| `voice-handler.test.ts`           | 6     | Voice/audio handler registration, pipeline   |
+| `voice-handler.test.ts`           | 7     | Voice/audio handler registration, pipeline   |
 | `callbacks.test.ts`               | 6     | Inline button callbacks (skip/listen TTS)    |
 | `twilio-calls.test.ts`            | 5     | Twilio outbound calls, TwiML, voice mapping  |
 | `code-task-repo.test.ts`          | 3     | CodeTaskRepository CRUD, ordering, limits    |
-| `project-repo.test.ts`            | 10    | ProjectRepository CRUD, limits, status       |
+| `project-repo.test.ts`            | 11    | ProjectRepository CRUD, limits, status       |
 | `squid-config.test.ts`            | 4     | Squid config generation from allowed domains |
 | `ndjson-parser.test.ts`           | 9     | Claude stream-json event parser coverage     |
 | `status.test.ts`                  | 5     | /status command: uptime, stats, errors       |

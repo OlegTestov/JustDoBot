@@ -93,7 +93,7 @@ describe("runGatingQuery", () => {
 
     const result = await runGatingQuery(engine, {}, [], "en");
     expect(result.action).toBe("skip");
-    expect(result.urgency).toBe(0);
+    expect(result.urgency).toBe(1);
     expect(result.reason).toContain("Gating query error");
   });
 

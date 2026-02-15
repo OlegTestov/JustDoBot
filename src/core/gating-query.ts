@@ -88,7 +88,7 @@ ${dataSections}`;
     logger.error({ err }, "Gating query failed");
     return {
       action: "skip",
-      urgency: 0,
+      urgency: 1,
       reason: `Gating query error: ${String(err)}`,
     };
   }

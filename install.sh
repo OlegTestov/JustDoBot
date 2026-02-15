@@ -354,7 +354,10 @@ if [ -d ".git" ]; then
 fi
 
 echo "  Installing npm packages..."
-bun install --frozen-lockfile 2>/dev/null || bun install
+if ! bun install --frozen-lockfile 2>&1; then
+  log_warn "Lockfile mismatch — running bun install (lockfile will be updated)"
+  bun install
+fi
 log_ok "Dependencies installed"
 
 # macOS: install Homebrew SQLite for sqlite-vec (better extension support than bundled fallback)

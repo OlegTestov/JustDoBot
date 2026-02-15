@@ -3,6 +3,8 @@ import type { MessageHandler } from "../../../../core/interfaces";
 import { getLogger } from "../../../../core/logger";
 import type { Translator } from "../../../../locales";
 
+const MEDIA_FETCH_TIMEOUT_MS = 30_000;
+
 export function registerMediaHandler(bot: Bot, handler: MessageHandler, t: Translator) {
   const logger = getLogger();
 
@@ -53,11 +55,15 @@ export function registerMediaHandler(bot: Bot, handler: MessageHandler, t: Trans
     let textContent = "";
 
     if (isText) {
-      const response = await fetch(fileUrl);
+      const response = await fetch(fileUrl, {
+        signal: AbortSignal.timeout(MEDIA_FETCH_TIMEOUT_MS),
+      });
       textContent = await response.text();
     } else if (isPdf) {
       try {
-        const response = await fetch(fileUrl);
+        const response = await fetch(fileUrl, {
+          signal: AbortSignal.timeout(MEDIA_FETCH_TIMEOUT_MS),
+        });
         const buffer = Buffer.from(await response.arrayBuffer());
         const pdfParse = (await import("pdf-parse")).default;
         const data = await pdfParse(buffer);
@@ -69,7 +75,9 @@ export function registerMediaHandler(bot: Bot, handler: MessageHandler, t: Trans
       }
     } else if (isDocx) {
       try {
-        const response = await fetch(fileUrl);
+        const response = await fetch(fileUrl, {
+          signal: AbortSignal.timeout(MEDIA_FETCH_TIMEOUT_MS),
+        });
         const buffer = Buffer.from(await response.arrayBuffer());
         const mammoth = await import("mammoth");
         const result = await mammoth.extractRawText({ buffer });

@@ -11,8 +11,8 @@ Thank you for your interest in contributing! This guide will help you get starte
 ## Setup
 
 ```bash
-git clone https://github.com/user/justdobot.git
-cd justdobot
+git clone https://github.com/OlegTestov/JustDoBot.git
+cd JustDoBot
 bun install
 bun run web-setup   # opens setup wizard at http://localhost:19380
 ```
@@ -21,7 +21,7 @@ bun run web-setup   # opens setup wizard at http://localhost:19380
 
 ```bash
 bun run dev         # start with --watch (auto-restart on changes)
-bun test            # run all 208 tests
+bun test            # run all 253 tests
 bun run typecheck   # TypeScript strict mode check
 bun run lint        # Biome linter
 bun run check       # typecheck + lint combined

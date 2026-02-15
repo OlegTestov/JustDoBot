@@ -95,7 +95,7 @@ export class MemoryRepository {
 
   searchMemoriesFTS(query: string, limit: number): Memory[] {
     // Escape FTS5 special characters
-    const safeQuery = query.replace(/['"*]/g, " ").trim();
+    const safeQuery = query.replace(/['"*():]/g, " ").trim();
     if (!safeQuery) return [];
     try {
       return this.stmtSearchFTS.all({

@@ -114,7 +114,7 @@ This includes safe execution boundaries and progress updates back to Telegram.
 ### Manual Setup (alternative to one-command install)
 
 ```bash
-git clone https://github.com/olegtestov/JustDoBot.git
+git clone https://github.com/OlegTestov/JustDoBot.git
 cd JustDoBot
 bun install
 bun run web-setup
@@ -179,7 +179,7 @@ bun run lint:fix
 
 ## More Details
 
-- Full architecture: `spec/ARCHITECTURE.md`
+- Full architecture: `ARCHITECTURE.md`
 - Configuration options: `config.example.yaml`
 
 ## License

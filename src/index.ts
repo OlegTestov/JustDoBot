@@ -585,7 +585,9 @@ async function main() {
     if (codeExecutor) {
       try {
         await codeExecutor.destroy();
-      } catch {}
+      } catch (err) {
+        logger.warn({ err }, "Code executor cleanup failed");
+      }
     }
     await registry.destroyAll();
 
