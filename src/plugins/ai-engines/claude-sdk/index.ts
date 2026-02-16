@@ -94,7 +94,6 @@ export class ClaudeSdkEngine implements IAIEngine {
     } catch (error) {
       if (error instanceof AbortError) {
         logger.info("Query aborted");
-        return;
       }
       throw error;
     } finally {

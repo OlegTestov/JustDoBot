@@ -11,3 +11,4 @@ site/node_modules/
 *.log
 .claude/
 spec/
+.DS_Store

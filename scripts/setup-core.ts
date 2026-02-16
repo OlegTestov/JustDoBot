@@ -500,9 +500,9 @@ messenger:
 ai_engine:
   type: "claude-agent-sdk"
   model: "${state.model}"
-  max_turns: 3
+  max_turns: 10
   allowed_tools: ["Read", "Grep", "Glob", "Write", "Edit", "Bash"]
-  timeout_seconds: 60
+  timeout_seconds: 180
   streaming: true
 
 database:

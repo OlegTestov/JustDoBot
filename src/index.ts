@@ -385,7 +385,7 @@ async function main() {
               logger.debug({ turn: assistantTurnCount, contentTypes }, "Assistant turn");
               const text = extractTextFromAssistant(assistantMsg);
               if (text) {
-                fullText = text;
+                fullText += (fullText ? "\n\n" : "") + text;
                 lastTextTurn = assistantTurnCount;
               }
               break;
@@ -425,8 +425,15 @@ async function main() {
         }
       } catch (err) {
         if (err instanceof AbortError) {
-          logger.info("Query cancelled by user");
+          logger.info("Query timed out");
           streamHandler.cancel();
+          if (fullText) {
+            await database.saveMessage({
+              session_id: sessionId,
+              role: "assistant",
+              content: fullText,
+            });
+          }
           return;
         }
         logger.error({ err }, "Error during Claude query");

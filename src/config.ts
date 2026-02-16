@@ -25,7 +25,7 @@ const Stage1ConfigSchema = z.object({
       .default("claude-sonnet-4-5"),
     max_turns: z.number().default(10),
     allowed_tools: z.array(z.string()).default(["Read", "Grep", "Glob", "Write", "Edit"]),
-    timeout_seconds: z.number().default(120),
+    timeout_seconds: z.number().default(180),
     streaming: z.boolean().default(true),
   }),
   database: z.object({

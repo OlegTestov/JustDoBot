@@ -56,7 +56,7 @@ export class ObsidianVaultProvider implements IVaultProvider {
       };
     };
 
-    this.vaultPath = cfg.vault.path;
+    this.vaultPath = process.env.VAULT_PATH || cfg.vault.path;
 
     if (!this.vaultPath || !existsSync(this.vaultPath)) {
       throw new Error(
