@@ -1,6 +1,6 @@
 # JustDoBot
 
-JustDoBot is a Claude Code-based AI workhorse for everyday life and work, using Telegram as the primary interface.
+JustDoBot is an AI workhorse for everyday life and work, built with **Bun**, **Grammy**, and the **Claude Agent SDK**, using Telegram as the primary interface.
 It runs on a Claude subscription workflow, so in this mode you do not pay per-request API costs.
 It is security-first, multilingual, and easy to set up with one command plus a graphical setup panel.
 The architecture is plugin-based, so features can be extended without rewriting the whole bot.
@@ -18,52 +18,43 @@ It installs dependencies and opens the setup UI in your browser.
 ## How JustDoBot Works
 
 ```mermaid
-flowchart TD
-  subgraph runOptions [Run Options]
-    oneCommand["One-command install"]
-    localRun["Local run (bun run start)"]
-    dockerRun["Docker run (bun run docker)"]
+flowchart LR
+  user["You in Telegram"]
+
+  subgraph core [JustDoBot Core]
+    direction TB
+    bot["Grammy + Claude Agent SDK"]
+    db["SQLite · FTS5 · Vectors"]
+    bot --- db
   end
 
-  subgraph coreFlow [Core Flow]
-    telegramUser["You in Telegram"]
-    justDoBot["JustDoBot (Claude Code-based)"]
-    streamReply["Streaming reply in chat"]
-    memoryGoals["Auto memory and goals"]
-    proactiveNudges["Proactive nudges when needed"]
+  subgraph integrations [Integrations]
+    memory["Memory & Goals"]
+    obsidian["Obsidian Vault"]
+    google["Gmail & Calendar"]
+    voice["Voice & Phone Calls"]
+    sandbox["Coding Sandbox"]
   end
 
-  subgraph optionalModules [Optional Modules]
-    obsidian["Obsidian knowledge search"]
-    googleData["Gmail and Calendar context"]
-    voiceCalls["Voice and urgent Twilio calls"]
-    codingSandbox["Coding sandbox project delivery"]
-  end
-
-  oneCommand --> justDoBot
-  localRun --> justDoBot
-  dockerRun --> justDoBot
-  telegramUser --> justDoBot
-  justDoBot --> streamReply
-  justDoBot --> memoryGoals
-  justDoBot --> proactiveNudges
-  justDoBot --> obsidian
-  justDoBot --> googleData
-  justDoBot --> voiceCalls
-  justDoBot --> codingSandbox
+  user <-->|streaming| core
+  core --> memory
+  core --> obsidian
+  core --> google
+  core --> voice
+  core --> sandbox
 ```
 
-Use local run for fast development. Use Docker for better isolation and safer production operation.
+Run locally with `bun run start` for development, or `bun run docker` for isolated production.
 
 ## Why This Bot
 
-- **Claude Code-based**: real agent workflow, not a simple chatbot wrapper.
+- **Claude Agent SDK**: real agent workflow with tool use, not a simple chatbot wrapper.
 - **Subscription workflow**: no API pay-per-call costs in this operating mode.
 - **Secure by design**: local data storage, isolated coding sandbox, controlled integrations.
 - **Telegram-first UX**: streaming replies directly in Telegram.
 - **Multilingual**: supports 15 interface/response languages.
 - **Easy setup**: one command install + web setup wizard.
-- **Extensible**: plugin architecture for AI, memory, vault, voice, collectors, and code execution.
+- **Extensible**: plugin architecture (IPlugin interface) for AI, memory, vault, voice, collectors, and code execution.
 
 ## How You Use It
 
@@ -79,20 +70,20 @@ Use local run for fast development. Use Docker for better isolation and safer pr
 - **Automatic memory**: stores personal preferences, facts, and relevant insights.
 - **Goal tracking**: keeps active goals with statuses, notes, and deadlines.
 - **Local-first data**: messages, memories, goals, and indexes are stored in local SQLite.
-- **Local search index**: full-text search and local vector storage for retrieval.
+- **Hybrid search**: SQLite FTS5 full-text search combined with local vector embeddings for accurate context retrieval.
 
 ## Optional Integrations
 
 - **Obsidian vault**: index and search your notes from Telegram.
 - **Google Gmail + Calendar**: add context for proactive reminders and nudges.
-- **Voice in Telegram**: speech-to-text and text-to-speech for voice workflows.
+- **Voice in Telegram**: speech-to-text and text-to-speech via Gemini or ElevenLabs.
 - **Urgent phone calls via Twilio**: bot can place outbound calls to deliver critical info.
   Full two-way phone conversation mode is planned for an upcoming release.
 
 ## Proactive Behavior
 
 When enabled, the bot can start the conversation itself.
-It checks relevant signals (like goals, deadlines, calendar, mail, and recent changes) and sends a proactive message only when useful.
+It checks Gmail, Google Calendar, active goals with deadlines, and recent conversation context, then sends a proactive message only when something needs your attention.
 It also supports cooldowns and quiet hours to avoid noise.
 
 ## Coding Sandbox
