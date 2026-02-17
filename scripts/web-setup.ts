@@ -93,6 +93,7 @@ async function handleStatus(): Promise<Response> {
       proactiveEnabled: state.proactiveEnabled,
       proactiveInterval: state.proactiveInterval,
       proactiveCooldown: state.proactiveCooldown,
+      reminderCooldown: state.reminderCooldown,
       quietHoursStart: state.quietHoursStart,
       quietHoursEnd: state.quietHoursEnd,
       googleEnabled: state.googleEnabled,
@@ -138,6 +139,7 @@ async function handleSave(req: Request): Promise<Response> {
     proactiveEnabled?: boolean;
     proactiveInterval?: number;
     proactiveCooldown?: number;
+    reminderCooldown?: number;
     quietHoursStart?: string;
     quietHoursEnd?: string;
     googleEnabled?: boolean;
@@ -192,6 +194,7 @@ async function handleSave(req: Request): Promise<Response> {
     proactiveEnabled: body.proactiveEnabled ?? false,
     proactiveInterval: body.proactiveInterval ?? 5,
     proactiveCooldown: body.proactiveCooldown ?? 15,
+    reminderCooldown: body.reminderCooldown ?? 180,
     quietHoursStart: body.quietHoursStart || "22:00",
     quietHoursEnd: body.quietHoursEnd || "08:00",
     googleEnabled: body.googleEnabled ?? false,

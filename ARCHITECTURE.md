@@ -309,7 +309,7 @@ Hard Gate 5: Active chat?     → SKIP (user active in last defer_minutes)
   │
   ▼
 Collect data from all ICollectors
-  │  ├── GoalsCollector     — active goals with deadlines ≤ 3 days
+  │  ├── GoalsCollector     — active goals with deadlines ≤ 3 days (incl. description)
   │  ├── VaultChangesCollector — recently modified vault docs (24h)
   │  └── GoogleCollectorProvider (optional)
   │     ├── GmailClient    — important unread emails
@@ -670,13 +670,14 @@ Claude has access to 6 memory/goal tools + 1 code tool + 1 phone tool via up to 
 | Tool | When | Key params |
 |------|------|------------|
 | **save_goal** | User sets new intention: "I want...", "deadline is..." | `title`, `description?`, `deadline?` |
-| **edit_goal** | User refines/corrects existing goal | `goalId?`, `title?` (fuzzy), `newTitle?`, `newDescription?`, `newDeadline?` |
-| **close_goal** | User says "done", "cancel", "pause" | `goalId?`, `title?` (fuzzy), `action` (complete/pause/cancel/resume) |
+| **edit_goal** | User refines/corrects existing goal | `goalId?`, `title?` (fuzzy), `newTitle?`, `newDescription?`, `newDeadline?`, `note?` |
+| **close_goal** | User says "done", "cancel", "pause" | `goalId?`, `title?` (fuzzy), `action` (complete/pause/cancel/resume), `note?` |
 
 - `edit_goal` and `close_goal` share a `resolveGoalId()` helper: use ID directly, or fuzzy FTS5 title search (0 → error, 1 → use it, >1 → ask user to disambiguate)
 - `edit_goal` updates title/description/deadline in-place, appends edit note to `progress_notes` JSON, re-embeds vector, FTS5 auto-updated via trigger
 - `close_goal` transitions goal status and appends progress note
-- System prompt instructs AI to check Active Goals before creating duplicates
+- System prompt instructs AI to **always include description** when saving goals and **add notes** on progress/close
+- System prompt shows goals with description (≤150 chars) and last progress note (≤100 chars) for full context
 
 ### make_phone_call (separate MCP server: twilio, optional)
 - **When:** User explicitly asks: "call me", "remind me by phone", "позвони мне"
@@ -706,7 +707,7 @@ Assembles prompt context within token budget (default 12000 tokens).
 |----------------|-------|--------------------------------|
 | Recent messages | 40%   | Last N messages from session    |
 | Memories        | 15%   | Hybrid search results           |
-| Goals           | 7%    | Active goals                    |
+| Goals           | 7%    | Active goals + description + last progress note |
 | Vault docs      | 25%   | Obsidian vault search results   |
 | Check-in logs   | 5%    | Recent proactive check-in logs  |
 | Reserve         | 8%    | Unused buffer                   |

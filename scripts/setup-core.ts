@@ -41,6 +41,7 @@ export interface WizardState {
   proactiveEnabled: boolean;
   proactiveInterval: number;
   proactiveCooldown: number;
+  reminderCooldown: number;
   quietHoursStart: string;
   quietHoursEnd: string;
   googleEnabled: boolean;
@@ -188,6 +189,7 @@ export function initState(
     proactiveEnabled: (proactive?.enabled as boolean) ?? false,
     proactiveInterval: (proactive?.check_interval_minutes as number) || 5,
     proactiveCooldown: (proactive?.cooldown_minutes as number) || 15,
+    reminderCooldown: (proactive?.reminder_cooldown_minutes as number) || 180,
     quietHoursStart: (quietHours?.start as string) || "22:00",
     quietHoursEnd: (quietHours?.end as string) || "08:00",
     googleEnabled: (google?.enabled as boolean) ?? false,
@@ -535,6 +537,7 @@ proactive:
   enabled: ${state.proactiveEnabled}
   check_interval_minutes: ${state.proactiveInterval}
   cooldown_minutes: ${state.proactiveCooldown}
+  reminder_cooldown_minutes: ${state.reminderCooldown}
   quiet_hours:
     start: "${state.quietHoursStart}"
     end: "${state.quietHoursEnd}"

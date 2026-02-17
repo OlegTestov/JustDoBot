@@ -276,11 +276,14 @@ export function registerCommands(
         await ctx.reply(deps.t("cmd.goals.empty"));
         return;
       }
-      const lines = goals.map(
-        (g) =>
-          `#${g.id}: ${g.title}${g.deadline ? ` (${deps.t("cmd.goals.deadline", { deadline: g.deadline })})` : ""} [${g.status}]`,
-      );
-      await ctx.reply(`${deps.t("cmd.goals.title")}\n\n${lines.join("\n")}`);
+      const lines = goals.map((g) => {
+        let line = `#${g.id}: ${g.title}${g.deadline ? ` (${deps.t("cmd.goals.deadline", { deadline: g.deadline })})` : ""} [${g.status}]`;
+        if (g.description) {
+          line += `\n  ${g.description.length > 100 ? `${g.description.slice(0, 100)}…` : g.description}`;
+        }
+        return line;
+      });
+      await ctx.reply(`${deps.t("cmd.goals.title")}\n\n${lines.join("\n\n")}`);
     } catch (err) {
       getLogger().error({ err }, "/goals command error");
       await ctx.reply(deps.t("cmd.goals.error"));

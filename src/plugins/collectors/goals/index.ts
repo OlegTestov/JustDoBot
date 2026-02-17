@@ -7,7 +7,13 @@ import type {
 import { getLogger } from "../../../core/logger";
 
 export interface GoalsCollectedData {
-  approaching: Array<{ id: number; title: string; deadline: string; status: string }>;
+  approaching: Array<{
+    id: number;
+    title: string;
+    description?: string;
+    deadline: string;
+    status: string;
+  }>;
 }
 
 export class GoalsCollector implements ICollector {
@@ -33,6 +39,7 @@ export class GoalsCollector implements ICollector {
         .map((g) => ({
           id: g.id!,
           title: g.title,
+          description: g.description?.slice(0, 150),
           deadline: g.deadline!,
           status: g.status,
         }));

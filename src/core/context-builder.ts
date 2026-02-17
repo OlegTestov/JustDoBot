@@ -107,7 +107,17 @@ export async function buildContext(
     const goals = await db.getActiveGoals();
     let goalTokens = 0;
     for (const goal of goals) {
-      const text = `${goal.title}: ${goal.description ?? ""}`;
+      let text = `${goal.title}: ${goal.description ?? ""}`;
+      if (goal.progress_notes) {
+        try {
+          const notes = JSON.parse(goal.progress_notes);
+          if (Array.isArray(notes) && notes.length > 0) {
+            text += ` ${notes[notes.length - 1].note ?? ""}`;
+          }
+        } catch {
+          /* malformed JSON — ignore */
+        }
+      }
       const tokens = estimateTokens(text);
       if (goalTokens + tokens > goalBudget) break;
       activeGoals.push(goal);

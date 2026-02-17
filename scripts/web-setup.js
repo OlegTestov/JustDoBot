@@ -194,6 +194,7 @@ const state = {
   proactiveEnabled: false,
   proactiveInterval: 5,
   proactiveCooldown: 15,
+  reminderCooldown: 180,
   quietHoursStart: "22:00",
   quietHoursEnd: "08:00",
   googleEnabled: false,
@@ -273,6 +274,10 @@ function bindInputListeners() {
 
   document.getElementById("proactive-cooldown").addEventListener("input", function () {
     state.proactiveCooldown = parseInt(this.value, 10) || 15;
+  });
+
+  document.getElementById("proactive-reminder-cooldown").addEventListener("input", function () {
+    state.reminderCooldown = parseInt(this.value, 10) || 180;
   });
 
   document.getElementById("quiet-start").addEventListener("input", function () {
@@ -441,6 +446,10 @@ function populateFromState(s) {
   if (s.proactiveCooldown) {
     document.getElementById("proactive-cooldown").value = s.proactiveCooldown;
     state.proactiveCooldown = s.proactiveCooldown;
+  }
+  if (s.reminderCooldown) {
+    document.getElementById("proactive-reminder-cooldown").value = s.reminderCooldown;
+    state.reminderCooldown = s.reminderCooldown;
   }
   if (s.quietHoursStart) {
     document.getElementById("quiet-start").value = s.quietHoursStart;
@@ -1194,6 +1203,8 @@ function collectState() {
   state.proactiveEnabled = document.getElementById("toggle-proactive").checked;
   state.proactiveInterval = parseInt(document.getElementById("proactive-interval").value, 10) || 5;
   state.proactiveCooldown = parseInt(document.getElementById("proactive-cooldown").value, 10) || 15;
+  state.reminderCooldown =
+    parseInt(document.getElementById("proactive-reminder-cooldown").value, 10) || 180;
   state.quietHoursStart = document.getElementById("quiet-start").value || "22:00";
   state.quietHoursEnd = document.getElementById("quiet-end").value || "08:00";
   state.googleEnabled = document.getElementById("toggle-google").checked;

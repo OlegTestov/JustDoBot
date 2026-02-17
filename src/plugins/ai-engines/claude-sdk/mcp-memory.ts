@@ -16,6 +16,7 @@ export function createMemoryMcpServer(
   db: IMemoryProvider,
   embeddingProvider: IEmbeddingProvider | null,
   _mcpContext: McpContext,
+  onGoalCreated?: (goalId: number) => void,
 ): McpSdkServerConfigWithInstance {
   const logger = getLogger();
 
@@ -235,6 +236,7 @@ export function createMemoryMcpServer(
           }
         }
 
+        onGoalCreated?.(id);
         logger.info({ goalId: id, title: args.title }, "Goal saved via MCP tool");
         return {
           content: [

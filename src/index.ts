@@ -157,7 +157,15 @@ async function main() {
 
   // Stage 2: MCP context (mutable, set before each query)
   const mcpContext: McpContext = { userId: "", sessionId: "" };
-  const memoryMcpServer = createMemoryMcpServer(database, embeddingProvider, mcpContext);
+  const checkInRepo: CheckInRepository = database.getCheckInRepo();
+  const memoryMcpServer = createMemoryMcpServer(
+    database,
+    embeddingProvider,
+    mcpContext,
+    (goalId) => {
+      checkInRepo.markGoalsReminded([goalId]);
+    },
+  );
   // biome-ignore lint: MCP servers are typed by the SDK internally
   const mcpServers: Record<string, any> = { memory: memoryMcpServer };
 
@@ -227,7 +235,6 @@ async function main() {
   }
 
   let proactiveScheduler: ProactiveScheduler | null = null;
-  const checkInRepo: CheckInRepository = database.getCheckInRepo();
 
   if (config.proactive.enabled && collectors.length > 0) {
     const allowedUsers = config.messenger.allowed_users;

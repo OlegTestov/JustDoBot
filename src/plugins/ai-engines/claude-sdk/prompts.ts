@@ -25,14 +25,30 @@ export function buildSystemPrompt(
     memoriesSection = "\n## Memories\nNo memories yet.\n";
   }
 
-  // Format goals
+  // Format goals (with description + last progress note)
   let goalsSection = "";
   if (context.activeGoals.length > 0) {
     const lines = context.activeGoals
-      .map(
-        (g) =>
-          `- #${g.id ?? "?"}: ${g.title}${g.deadline ? ` (by ${g.deadline})` : ""} [${g.status}]`,
-      )
+      .map((g) => {
+        let line = `- #${g.id ?? "?"}: ${g.title}${g.deadline ? ` (by ${g.deadline})` : ""} [${g.status}]`;
+        if (g.description) {
+          line += `\n  ${g.description.length > 150 ? `${g.description.slice(0, 150)}…` : g.description}`;
+        }
+        if (g.progress_notes) {
+          try {
+            const notes = JSON.parse(g.progress_notes);
+            if (Array.isArray(notes) && notes.length > 0) {
+              const last = notes[notes.length - 1];
+              const date = last.date ? ` [${last.date.slice(0, 10)}]` : "";
+              const noteText = last.note ?? "";
+              line += `\n  ↳ ${noteText.length > 100 ? `${noteText.slice(0, 100)}…` : noteText}${date}`;
+            }
+          } catch {
+            /* malformed JSON — ignore */
+          }
+        }
+        return line;
+      })
       .join("\n");
     goalsSection = `\n## Active Goals\n${lines}\n`;
   } else {
@@ -156,9 +172,9 @@ ${currentTime} (${tz})
 - **delete_memory**: Remove a fact by ID. Use when user says "forget that".
 
 **Goals** (tasks, deadlines, plans):
-- **save_goal**: Create a NEW goal. Check Active Goals first — if similar exists, use edit_goal.
-- **edit_goal**: Edit goal's title, description, or deadline. Use when user refines or corrects a goal.
-- **close_goal**: Complete, pause, cancel, or resume a goal.
+- **save_goal**: Create a NEW goal. **Always include description** with specific steps/details the user mentioned. Check Active Goals first — if similar exists, use edit_goal.
+- **edit_goal**: Edit goal's title, description, or deadline. **Add a note** when user reports progress or shares new details.
+- **close_goal**: Complete, pause, cancel, or resume a goal. **Add a note** summarizing the outcome.
 
 Do NOT overuse tools. Only save meaningful, new information.
 Do NOT duplicate facts already in "Memories" below.
