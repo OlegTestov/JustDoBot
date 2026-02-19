@@ -70,6 +70,7 @@
 
   "error.general": "Mesajınız işlenirken bir hata oluştu.",
   "error.auth": "\n\nNeden: Kimlik doğrulama sorunu. Sunucuda `claude login` çalıştırın.",
+  "error.authExpired": "\n\nNeden: Kimlik doğrulama belirteci süresi doldu. Kimlik bilgilerini yenilemek için ana makinede `bun run docker` çalıştırın.",
   "error.rateLimit": "\n\nNeden: İstek limiti aşıldı. Lütfen birkaç dakika bekleyin.",
   "error.timeout": "\n\nNeden: İstek zaman aşımına uğradı. Daha kısa bir mesaj deneyin.",
   "error.retry": " Lütfen tekrar deneyin.",

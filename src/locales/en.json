@@ -70,6 +70,7 @@
 
   "error.general": "An error occurred while processing your message.",
   "error.auth": "\n\nCause: Authentication issue. Run `claude login` on the server.",
+  "error.authExpired": "\n\nCause: Authentication token expired. Run `bun run docker` on the host machine to refresh credentials.",
   "error.rateLimit": "\n\nCause: Rate limit reached. Please wait a few minutes.",
   "error.timeout": "\n\nCause: Request timed out. Try a shorter message.",
   "error.retry": " Please try again.",

@@ -172,7 +172,7 @@ export function initState(
     // Section 1
     telegramToken: env.TELEGRAM_BOT_TOKEN || cfgToken,
     allowedUserId: env.ALLOWED_USER_ID || cfgAllowedUsers[0] || "",
-    model: (ai?.model as string) || "claude-sonnet-4-5",
+    model: (ai?.model as string) || "claude-sonnet-4-6",
     language: (bot?.language as string) || "en",
     timezone: (bot?.timezone as string) || "UTC",
     // Section 2

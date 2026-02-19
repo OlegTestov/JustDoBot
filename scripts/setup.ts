@@ -269,17 +269,17 @@ async function configureTelegramAndModel(state: WizardState): Promise<void> {
 
   // Model
   console.log("\n  AI Model:");
-  console.log("    1. claude-sonnet-4-5  — fast & smart (recommended)");
+  console.log("    1. claude-sonnet-4-6  — fast & smart (recommended)");
   console.log("    2. claude-opus-4-6    — most capable, slower");
   console.log("    3. claude-haiku-4-5   — fastest, cheapest");
 
   const modelMap: Record<string, string> = {
-    "1": "claude-sonnet-4-5",
+    "1": "claude-sonnet-4-6",
     "2": "claude-opus-4-6",
     "3": "claude-haiku-4-5",
   };
   const reverseMap: Record<string, string> = {
-    "claude-sonnet-4-5": "1",
+    "claude-sonnet-4-6": "1",
     "claude-opus-4-6": "2",
     "claude-haiku-4-5": "3",
   };

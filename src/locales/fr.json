@@ -70,6 +70,7 @@
 
   "error.general": "Une erreur est survenue lors du traitement de votre message.",
   "error.auth": "\n\nCause : problème d'authentification. Exécutez `claude login` sur le serveur.",
+  "error.authExpired": "\n\nCause : le jeton d'authentification a expiré. Exécutez `bun run docker` sur la machine hôte pour renouveler les identifiants.",
   "error.rateLimit": "\n\nCause : limite de requêtes atteinte. Veuillez patienter quelques minutes.",
   "error.timeout": "\n\nCause : délai d'attente dépassé. Essayez un message plus court.",
   "error.retry": " Veuillez réessayer.",

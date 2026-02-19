@@ -51,7 +51,7 @@ describe("loadConfig", () => {
     expect(config.bot.timezone).toBe("UTC");
     expect(config.messenger.token).toBe("123456:ABCDEF");
     expect(config.messenger.allowed_users).toEqual(["999"]);
-    expect(config.ai_engine.model).toBe("claude-sonnet-4-5");
+    expect(config.ai_engine.model).toBe("claude-sonnet-4-6");
     expect(config.ai_engine.max_turns).toBe(10);
     expect(config.database.path).toBe("./data/bot.db");
     expect(config.context.max_tokens).toBe(12000);

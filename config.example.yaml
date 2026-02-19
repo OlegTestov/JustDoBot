@@ -13,7 +13,7 @@ messenger:
 
 ai_engine:
   type: "claude-agent-sdk"
-  model: "claude-sonnet-4-5"      # claude-opus-4-6 | claude-sonnet-4-5 | claude-haiku-4-5
+  model: "claude-sonnet-4-6"      # claude-opus-4-6 | claude-sonnet-4-6 | claude-haiku-4-5
   max_turns: 3                    # Max tool-use rounds per query (higher = slower, more capable)
   allowed_tools: ["Read", "Grep", "Glob", "Write", "Edit"]  # Main chat assistant tools
   timeout_seconds: 60             # Abort query after N seconds

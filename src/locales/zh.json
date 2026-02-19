@@ -70,6 +70,7 @@
 
   "error.general": "处理您的消息时发生错误。",
   "error.auth": "\n\n原因：身份验证问题。请在服务器上运行 `claude login`。",
+  "error.authExpired": "\n\n原因：身份验证令牌已过期。请在主机上运行 `bun run docker` 以刷新凭据。",
   "error.rateLimit": "\n\n原因：已达到请求限制。请等待几分钟。",
   "error.timeout": "\n\n原因：请求超时。请尝试发送更短的消息。",
   "error.retry": " 请重试。",

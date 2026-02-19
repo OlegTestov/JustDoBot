@@ -70,6 +70,7 @@
 
   "error.general": "Si è verificato un errore durante l'elaborazione del messaggio.",
   "error.auth": "\n\nCausa: problema di autenticazione. Esegui `claude login` sul server.",
+  "error.authExpired": "\n\nCausa: token di autenticazione scaduto. Esegui `bun run docker` sulla macchina host per rinnovare le credenziali.",
   "error.rateLimit": "\n\nCausa: limite richieste raggiunto. Attendi qualche minuto.",
   "error.timeout": "\n\nCausa: timeout della richiesta. Prova un messaggio più breve.",
   "error.retry": " Riprova.",

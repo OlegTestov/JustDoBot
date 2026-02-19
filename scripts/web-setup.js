@@ -186,7 +186,7 @@ const state = {
   userId: "",
   language: "en",
   timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC",
-  model: "claude-sonnet-4-5",
+  model: "claude-sonnet-4-6",
   embeddingsEnabled: false,
   openaiKey: "",
   vaultEnabled: false,
@@ -1078,7 +1078,7 @@ function buildConfigSummary() {
   collectState();
 
   const modelNames = {
-    "claude-sonnet-4-5": t("step2.sonnet.name"),
+    "claude-sonnet-4-6": t("step2.sonnet.name"),
     "claude-opus-4-6": t("step2.opus.name"),
     "claude-haiku-4-5": t("step2.haiku.name"),
   };

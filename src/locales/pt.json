@@ -70,6 +70,7 @@
 
   "error.general": "Ocorreu um erro ao processar sua mensagem.",
   "error.auth": "\n\nCausa: problema de autenticação. Execute `claude login` no servidor.",
+  "error.authExpired": "\n\nCausa: token de autenticação expirado. Execute `bun run docker` na máquina host para renovar as credenciais.",
   "error.rateLimit": "\n\nCausa: limite de requisições atingido. Aguarde alguns minutos.",
   "error.timeout": "\n\nCausa: tempo esgotado. Tente uma mensagem mais curta.",
   "error.retry": " Tente novamente.",

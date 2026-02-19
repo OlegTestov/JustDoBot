@@ -70,6 +70,7 @@
 
   "error.general": "Bei der Verarbeitung deiner Nachricht ist ein Fehler aufgetreten.",
   "error.auth": "\n\nUrsache: Authentifizierungsproblem. Führe `claude login` auf dem Server aus.",
+  "error.authExpired": "\n\nUrsache: Authentifizierungstoken abgelaufen. Führe `bun run docker` auf dem Host-Rechner aus, um die Anmeldedaten zu erneuern.",
   "error.rateLimit": "\n\nUrsache: Rate-Limit erreicht. Bitte warte einige Minuten.",
   "error.timeout": "\n\nUrsache: Zeitüberschreitung. Versuche eine kürzere Nachricht.",
   "error.retry": " Bitte versuche es erneut.",

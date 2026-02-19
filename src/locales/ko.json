@@ -70,6 +70,7 @@
 
   "error.general": "메시지를 처리하는 중 오류가 발생했습니다.",
   "error.auth": "\n\n원인: 인증 문제. 서버에서 `claude login`을 실행하세요.",
+  "error.authExpired": "\n\n원인: 인증 토큰이 만료되었습니다. 호스트 머신에서 `bun run docker`를 실행하여 자격 증명을 갱신하세요.",
   "error.rateLimit": "\n\n원인: 요청 제한에 도달했습니다. 몇 분만 기다려주세요.",
   "error.timeout": "\n\n원인: 요청 시간 초과. 더 짧은 메시지를 시도하세요.",
   "error.retry": " 다시 시도해주세요.",

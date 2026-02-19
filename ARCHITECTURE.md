@@ -812,7 +812,7 @@ messenger:
 
 ai_engine:
   type: "claude-agent-sdk"
-  model: "claude-sonnet-4-5"
+  model: "claude-sonnet-4-6"
   max_turns: 10
   allowed_tools: ["Read", "Grep", "Glob", "Write", "Edit"]
   timeout_seconds: 120
@@ -983,6 +983,7 @@ The web setup panel has its own independent translation system:
 - **Unauthorized users** — `/start` in private chat responds with their Telegram ID + instructions
 - **Rate limit** — Shows minutes until reset: "Wait ~5 min"
 - **AI query errors** — Contextual messages: auth (401), rate limit (429), timeout, generic
+- **OAuth expiration** — When refresh token is permanently invalid (`invalid_grant`), `ClaudeOAuthRefreshManager` sets `authFailed` flag, sends proactive Telegram notification to first allowed user with `error.authExpired` message ("Run `bun run docker` on host"), and stops retrying
 
 ---
 
@@ -1162,4 +1163,5 @@ Claude OAuth flow in Docker:
 2. `docker-entrypoint.sh` decodes env var → writes to `${HOME}/.claude/.credentials.json` (tmpfs)
    → unsets env var → execs bot (credentials not visible in volumes or env vars)
 3. `ClaudeOAuthRefreshManager` refreshes access token via `fetch` before expiry
-4. Refreshed credentials are atomically written to SDK path in tmpfs only
+4. If refresh fails with `invalid_grant`, `authFailed` flag is set → Telegram notification sent to user → retries stopped (6h delay)
+5. Refreshed credentials are atomically written to SDK path in tmpfs only

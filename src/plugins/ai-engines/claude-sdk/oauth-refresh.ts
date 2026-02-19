@@ -102,7 +102,9 @@ export class ClaudeOAuthRefreshManager {
   private retryDelayMs = MIN_DELAY_MS;
   private refreshing = false;
   private stopped = false;
+  private authFailed = false;
   private onRefresh?: (credentialsJson: string) => void;
+  private onAuthFailed?: (reason: string) => void;
 
   constructor(options?: {
     sourcePath?: string;
@@ -126,6 +128,19 @@ export class ClaudeOAuthRefreshManager {
 
   setOnRefresh(cb: (credentialsJson: string) => void): void {
     this.onRefresh = cb;
+  }
+
+  setOnAuthFailed(cb: (reason: string) => void): void {
+    this.onAuthFailed = cb;
+  }
+
+  isAuthFailed(): boolean {
+    return this.authFailed;
+  }
+
+  clearAuthFailed(): void {
+    this.authFailed = false;
+    this.retryDelayMs = MIN_DELAY_MS;
   }
 
   stop(): void {
@@ -235,6 +250,16 @@ export class ClaudeOAuthRefreshManager {
             { status: response.status, errCode, errDescription },
             "OAuth token refresh failed",
           );
+
+          if (errCode === "invalid_grant") {
+            this.authFailed = true;
+            const reason = errDescription || "Refresh token expired or revoked";
+            logger.error({ reason }, "OAuth refresh token is permanently invalid");
+            this.onAuthFailed?.(reason);
+            this.schedule(MAX_DELAY_MS);
+            return;
+          }
+
           this.scheduleRetry();
           return;
         }
@@ -260,6 +285,7 @@ export class ClaudeOAuthRefreshManager {
         this.onRefresh?.(JSON.stringify(nextCredentials, null, 2));
 
         logger.info("OAuth access token refreshed");
+        this.authFailed = false;
         this.retryDelayMs = MIN_DELAY_MS;
         this.scheduleNext();
       } finally {

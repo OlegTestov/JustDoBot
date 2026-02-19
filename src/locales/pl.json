@@ -70,6 +70,7 @@
 
   "error.general": "Wystąpił błąd podczas przetwarzania wiadomości.",
   "error.auth": "\n\nPrzyczyna: problem z uwierzytelnieniem. Uruchom `claude login` na serwerze.",
+  "error.authExpired": "\n\nPrzyczyna: token uwierzytelniania wygasł. Uruchom `bun run docker` na maszynie hosta, aby odnowić poświadczenia.",
   "error.rateLimit": "\n\nPrzyczyna: osiągnięto limit zapytań. Poczekaj kilka minut.",
   "error.timeout": "\n\nPrzyczyna: przekroczono czas oczekiwania. Spróbuj krótszej wiadomości.",
   "error.retry": " Spróbuj ponownie.",

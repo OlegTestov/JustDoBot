@@ -21,8 +21,8 @@ const Stage1ConfigSchema = z.object({
   ai_engine: z.object({
     type: z.literal("claude-agent-sdk"),
     model: z
-      .enum(["claude-opus-4-6", "claude-sonnet-4-5", "claude-haiku-4-5"])
-      .default("claude-sonnet-4-5"),
+      .enum(["claude-opus-4-6", "claude-sonnet-4-6", "claude-haiku-4-5"])
+      .default("claude-sonnet-4-6"),
     max_turns: z.number().default(10),
     allowed_tools: z.array(z.string()).default(["Read", "Grep", "Glob", "Write", "Edit"]),
     timeout_seconds: z.number().default(180),

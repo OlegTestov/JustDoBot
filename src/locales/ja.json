@@ -70,6 +70,7 @@
 
   "error.general": "メッセージの処理中にエラーが発生しました。",
   "error.auth": "\n\n原因: 認証の問題。サーバーで `claude login` を実行してください。",
+  "error.authExpired": "\n\n原因: 認証トークンが期限切れです。ホストマシンで `bun run docker` を実行して資格情報を更新してください。",
   "error.rateLimit": "\n\n原因: リクエスト制限に達しました。数分お待ちください。",
   "error.timeout": "\n\n原因: リクエストがタイムアウトしました。短いメッセージをお試しください。",
   "error.retry": " もう一度お試しください。",

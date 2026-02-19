@@ -180,7 +180,7 @@ async function handleSave(req: Request): Promise<Response> {
     claudeCliAvailable: envStatus.claudeCliAvailable,
     telegramToken: token,
     allowedUserId: body.userId,
-    model: body.model || "claude-sonnet-4-5",
+    model: body.model || "claude-sonnet-4-6",
     language: body.language || "en",
     timezone: body.timezone || "UTC",
     embeddingEnabled: body.embeddingsEnabled ?? false,

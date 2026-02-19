@@ -155,6 +155,15 @@ async function main() {
   // Create translator early — needed by MCP servers
   const t = createTranslator(config.bot.language);
 
+  // Notify user in Telegram when OAuth credentials are permanently invalid
+  oauthRefreshManager.setOnAuthFailed((reason) => {
+    logger.error({ reason }, "OAuth credentials permanently invalid");
+    const chatId = Number(config.messenger.allowed_users[0]);
+    if (chatId) {
+      messenger.sendMessage(chatId, t("error.general") + t("error.authExpired")).catch(() => {});
+    }
+  });
+
   // Stage 2: MCP context (mutable, set before each query)
   const mcpContext: McpContext = { userId: "", sessionId: "" };
   const checkInRepo: CheckInRepository = database.getCheckInRepo();
@@ -446,7 +455,9 @@ async function main() {
         logger.error({ err }, "Error during Claude query");
         let userMessage = t("error.general");
         const errMsg = String(err);
-        if (errMsg.includes("401") || errMsg.includes("auth") || errMsg.includes("Auth")) {
+        if (oauthRefreshManager.isAuthFailed()) {
+          userMessage += t("error.authExpired");
+        } else if (errMsg.includes("401") || errMsg.includes("auth") || errMsg.includes("Auth")) {
           userMessage += t("error.auth");
         } else if (errMsg.includes("rate") || errMsg.includes("429")) {
           userMessage += t("error.rateLimit");
