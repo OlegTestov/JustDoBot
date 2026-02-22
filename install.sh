@@ -164,10 +164,10 @@ else
   # Try package manager first (faster if available)
   if [ "$OS" = "Darwin" ] && command -v brew &>/dev/null; then
     echo "  Installing via Homebrew..."
-    brew install node 2>/dev/null || true
+    HOMEBREW_NO_AUTO_UPDATE=1 brew install node </dev/null &>/dev/null || true
   elif [ "$OS" = "Linux" ] && command -v apt-get &>/dev/null; then
     echo "  Installing via apt..."
-    sudo apt-get install -y nodejs npm 2>/dev/null || true
+    sudo apt-get install -y nodejs npm </dev/null &>/dev/null || true
   fi
   hash -r 2>/dev/null || true
 
@@ -201,9 +201,9 @@ if command -v claude &>/dev/null; then
 else
   echo "  Installing Claude CLI..."
   if command -v npm &>/dev/null; then
-    npm install -g @anthropic-ai/claude-code 2>/dev/null || true
+    npm install -g @anthropic-ai/claude-code </dev/null &>/dev/null || true
   elif command -v bun &>/dev/null; then
-    bun install -g @anthropic-ai/claude-code 2>/dev/null || true
+    bun install -g @anthropic-ai/claude-code </dev/null &>/dev/null || true
   fi
 
   # Refresh PATH — global bins may be in a new location after install
@@ -286,7 +286,7 @@ else
     if [ "$OS" = "Darwin" ]; then
       if command -v brew &>/dev/null; then
         echo "  Installing Docker Desktop via Homebrew..."
-        if brew install --cask docker 2>/dev/null; then
+        if HOMEBREW_NO_AUTO_UPDATE=1 brew install --cask docker </dev/null &>/dev/null; then
           log_ok "Docker Desktop installed via Homebrew"
           echo "  Please launch Docker Desktop from Applications to start the daemon."
         else
@@ -328,7 +328,7 @@ elif [ -d "JustDoBot" ]; then
   log_ok "Found existing JustDoBot directory"
 else
   echo "  Cloning repository..."
-  git clone https://github.com/olegtestov/JustDoBot.git 2>/dev/null || {
+  git clone https://github.com/olegtestov/JustDoBot.git </dev/null 2>/dev/null || {
     log_fail "Could not clone repository"
     echo "  Clone manually: git clone https://github.com/olegtestov/JustDoBot.git"
     exit 1
@@ -340,7 +340,7 @@ fi
 # Pull latest changes if this is a git repo
 if [ -d ".git" ]; then
   BEFORE=$(git rev-parse HEAD 2>/dev/null)
-  if git pull --ff-only origin main 2>/dev/null; then
+  if git pull --ff-only origin main </dev/null 2>/dev/null; then
     AFTER=$(git rev-parse HEAD 2>/dev/null)
     if [ "$BEFORE" = "$AFTER" ]; then
       log_ok "Already up to date"
@@ -354,9 +354,9 @@ if [ -d ".git" ]; then
 fi
 
 echo "  Installing npm packages..."
-if ! bun install --frozen-lockfile 2>&1; then
+if ! bun install --frozen-lockfile </dev/null 2>&1; then
   log_warn "Lockfile mismatch — running bun install (lockfile will be updated)"
-  bun install
+  bun install </dev/null
 fi
 log_ok "Dependencies installed"
 
@@ -365,7 +365,7 @@ if [ "$OS" = "Darwin" ] && command -v brew &>/dev/null; then
   if ! [ -f "/opt/homebrew/opt/sqlite/lib/libsqlite3.dylib" ] && \
      ! [ -f "/usr/local/opt/sqlite/lib/libsqlite3.dylib" ]; then
     echo "  Installing Homebrew SQLite (for semantic search)..."
-    brew install sqlite 2>/dev/null || true
+    HOMEBREW_NO_AUTO_UPDATE=1 brew install sqlite </dev/null &>/dev/null || true
   fi
 fi
 
@@ -373,9 +373,9 @@ fi
 if ! command -v ffmpeg &>/dev/null; then
   echo "  Installing ffmpeg (for voice features)..."
   if [ "$OS" = "Darwin" ] && command -v brew &>/dev/null; then
-    brew install ffmpeg 2>/dev/null || log_warn "Could not install ffmpeg via Homebrew"
+    HOMEBREW_NO_AUTO_UPDATE=1 brew install ffmpeg </dev/null &>/dev/null || log_warn "Could not install ffmpeg via Homebrew"
   elif command -v apt-get &>/dev/null; then
-    sudo apt-get install -y --no-install-recommends ffmpeg 2>/dev/null || log_warn "Could not install ffmpeg via apt"
+    sudo apt-get install -y --no-install-recommends ffmpeg </dev/null &>/dev/null || log_warn "Could not install ffmpeg via apt"
   else
     log_warn "ffmpeg not found — install manually for Gemini voice features"
   fi
