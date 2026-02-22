@@ -203,7 +203,7 @@ const state = {
   voiceSttEnabled: false,
   geminiApiKey: "",
   voiceTtsEnabled: false,
-  voiceTtsType: "elevenlabs",
+  voiceTtsType: "gemini",
   elevenlabsApiKey: "",
   elevenlabsVoiceId: "",
   voiceAutoReply: true,

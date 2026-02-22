@@ -203,7 +203,7 @@ async function handleSave(req: Request): Promise<Response> {
     voiceSttEnabled: body.voiceSttEnabled ?? false,
     geminiApiKey,
     voiceTtsEnabled: body.voiceTtsEnabled ?? false,
-    voiceTtsType: (body.voiceTtsType || "elevenlabs") as "elevenlabs" | "gemini",
+    voiceTtsType: (body.voiceTtsType || "gemini") as "elevenlabs" | "gemini",
     elevenlabsApiKey,
     elevenlabsVoiceId,
     voiceAutoReply: body.voiceAutoReply ?? true,
