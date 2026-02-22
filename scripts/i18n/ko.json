@@ -80,6 +80,8 @@
   "step4.proactive.interval.hint": "봇이 데이터를 수집하고 메시지를 보낼지 결정하는 빈도",
   "step4.proactive.cooldown.label": "쿨다운 (분)",
   "step4.proactive.cooldown.hint": "사전 알림 메시지 간 최소 분",
+  "step4.proactive.reminderCooldown.label": "목표 알림 대기 시간 (분)",
+  "step4.proactive.reminderCooldown.hint": "같은 목표에 대해 다시 알리기 전 대기 시간",
   "step4.proactive.quiet.label": "조용한 시간대",
   "step4.proactive.quiet.hint": "이 시간대에는 사전 알림 메시지를 보내지 않습니다",
   "step4.google.title": "Google 연동",

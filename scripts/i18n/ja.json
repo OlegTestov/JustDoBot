@@ -80,6 +80,8 @@
   "step4.proactive.interval.hint": "ボットがデータを収集し、メッセージを送信するかどうかを判断する頻度",
   "step4.proactive.cooldown.label": "クールダウン（分）",
   "step4.proactive.cooldown.hint": "プロアクティブメッセージ間の最小分数",
+  "step4.proactive.reminderCooldown.label": "目標リマインダーのクールダウン（分）",
+  "step4.proactive.reminderCooldown.hint": "同じ目標について再度リマインドするまでの待機時間",
   "step4.proactive.quiet.label": "静かな時間帯",
   "step4.proactive.quiet.hint": "この期間中はプロアクティブメッセージを送信しません",
   "step4.google.title": "Google連携",

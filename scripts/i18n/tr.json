@@ -80,6 +80,8 @@
   "step4.proactive.interval.hint": "Botun ne sıklıkla veri toplayıp size mesaj gönderip göndermeyeceğine karar vereceği",
   "step4.proactive.cooldown.label": "Bekleme Süresi (dakika)",
   "step4.proactive.cooldown.hint": "Proaktif mesajlar arasındaki minimum dakika",
+  "step4.proactive.reminderCooldown.label": "Hedef hatırlatma bekleme süresi (dakika)",
+  "step4.proactive.reminderCooldown.hint": "Aynı hedef hakkında tekrar hatırlatmadan önce ne kadar beklenmeli",
   "step4.proactive.quiet.label": "Sessiz Saatler",
   "step4.proactive.quiet.hint": "Bu süre zarfında proaktif mesaj gönderilmez",
   "step4.google.title": "Google Entegrasyonu",

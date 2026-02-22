@@ -80,6 +80,8 @@
   "step4.proactive.interval.hint": "Wie oft der Bot Daten sammelt und entscheidet, ob er Ihnen eine Nachricht senden soll",
   "step4.proactive.cooldown.label": "Abklingzeit (Minuten)",
   "step4.proactive.cooldown.hint": "Minimale Minuten zwischen proaktiven Nachrichten",
+  "step4.proactive.reminderCooldown.label": "Ziel-Erinnerungspause (Minuten)",
+  "step4.proactive.reminderCooldown.hint": "Wartezeit vor erneuter Erinnerung an dasselbe Ziel",
   "step4.proactive.quiet.label": "Ruhezeiten",
   "step4.proactive.quiet.hint": "Keine proaktiven Nachrichten während dieses Zeitraums",
   "step4.google.title": "Google-Integration",

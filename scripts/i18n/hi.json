@@ -80,6 +80,8 @@
   "step4.proactive.interval.hint": "बॉट कितनी बार डेटा एकत्र करता है और तय करता है कि आपको संदेश भेजना है या नहीं",
   "step4.proactive.cooldown.label": "कूलडाउन (मिनट)",
   "step4.proactive.cooldown.hint": "सक्रिय संदेशों के बीच न्यूनतम मिनट",
+  "step4.proactive.reminderCooldown.label": "लक्ष्य अनुस्मारक विराम (मिनट)",
+  "step4.proactive.reminderCooldown.hint": "उसी लक्ष्य के बारे में फिर से याद दिलाने से पहले कितनी देर प्रतीक्षा करें",
   "step4.proactive.quiet.label": "शांत घंटे",
   "step4.proactive.quiet.hint": "इस अवधि के दौरान कोई सक्रिय संदेश नहीं",
   "step4.google.title": "Google इंटीग्रेशन",

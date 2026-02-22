@@ -80,6 +80,8 @@
   "step4.proactive.interval.hint": "机器人多久收集一次数据并决定是否向您发送消息",
   "step4.proactive.cooldown.label": "冷却时间（分钟）",
   "step4.proactive.cooldown.hint": "主动消息之间的最少分钟数",
+  "step4.proactive.reminderCooldown.label": "目标提醒冷却时间（分钟）",
+  "step4.proactive.reminderCooldown.hint": "再次提醒同一目标前需等待的时间",
   "step4.proactive.quiet.label": "免打扰时段",
   "step4.proactive.quiet.hint": "此时段内不发送主动消息",
   "step4.google.title": "Google 集成",

@@ -80,6 +80,8 @@
   "step4.proactive.interval.hint": "À quelle fréquence le bot collecte les données et décide s'il doit vous envoyer un message",
   "step4.proactive.cooldown.label": "Délai de repos (minutes)",
   "step4.proactive.cooldown.hint": "Minutes minimum entre les messages proactifs",
+  "step4.proactive.reminderCooldown.label": "Pause de rappel d'objectifs (minutes)",
+  "step4.proactive.reminderCooldown.hint": "Délai avant de rappeler le même objectif à nouveau",
   "step4.proactive.quiet.label": "Heures calmes",
   "step4.proactive.quiet.hint": "Pas de messages proactifs pendant cette période",
   "step4.google.title": "Intégration Google",

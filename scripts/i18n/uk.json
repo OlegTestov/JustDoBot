@@ -80,6 +80,8 @@
   "step4.proactive.interval.hint": "Як часто бот збирає дані та вирішує, чи надсилати вам повідомлення",
   "step4.proactive.cooldown.label": "Пауза (хвилини)",
   "step4.proactive.cooldown.hint": "Мінімальна кількість хвилин між проактивними повідомленнями",
+  "step4.proactive.reminderCooldown.label": "Пауза нагадувань про цілі (хвилини)",
+  "step4.proactive.reminderCooldown.hint": "Скільки чекати перед повторним нагадуванням про ту саму ціль",
   "step4.proactive.quiet.label": "Тихі години",
   "step4.proactive.quiet.hint": "Жодних проактивних повідомлень у цей період",
   "step4.google.title": "Інтеграція з Google",

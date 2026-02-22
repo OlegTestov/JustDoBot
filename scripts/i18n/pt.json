@@ -80,6 +80,8 @@
   "step4.proactive.interval.hint": "Com que frequência o bot coleta dados e decide se deve enviar uma mensagem",
   "step4.proactive.cooldown.label": "Tempo de espera (minutos)",
   "step4.proactive.cooldown.hint": "Minutos mínimos entre mensagens proativas",
+  "step4.proactive.reminderCooldown.label": "Pausa de lembrete de metas (minutos)",
+  "step4.proactive.reminderCooldown.hint": "Quanto tempo esperar antes de lembrar sobre a mesma meta novamente",
   "step4.proactive.quiet.label": "Horário silencioso",
   "step4.proactive.quiet.hint": "Sem mensagens proativas durante este período",
   "step4.google.title": "Integração com Google",

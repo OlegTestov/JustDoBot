@@ -80,6 +80,8 @@
   "step4.proactive.interval.hint": "كم مرة يجمع البوت البيانات ويقرر ما إذا كان سيرسل لك رسالة",
   "step4.proactive.cooldown.label": "فترة الراحة (دقائق)",
   "step4.proactive.cooldown.hint": "الحد الأدنى من الدقائق بين الرسائل الاستباقية",
+  "step4.proactive.reminderCooldown.label": "فترة راحة تذكير الأهداف (دقائق)",
+  "step4.proactive.reminderCooldown.hint": "مدة الانتظار قبل التذكير بنفس الهدف مرة أخرى",
   "step4.proactive.quiet.label": "ساعات الهدوء",
   "step4.proactive.quiet.hint": "لا رسائل استباقية خلال هذه الفترة",
   "step4.google.title": "تكامل Google",
