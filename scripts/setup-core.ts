@@ -199,7 +199,7 @@ export function initState(
     voiceSttEnabled: ((voice?.stt as Record<string, unknown>)?.enabled as boolean) ?? false,
     geminiApiKey: env.GEMINI_API_KEY || "",
     voiceTtsEnabled: ((voice?.tts as Record<string, unknown>)?.enabled as boolean) ?? false,
-    voiceTtsType: (((voice?.tts as Record<string, unknown>)?.type as string) || "elevenlabs") as
+    voiceTtsType: (((voice?.tts as Record<string, unknown>)?.type as string) || "gemini") as
       | "elevenlabs"
       | "gemini",
     elevenlabsApiKey: env.ELEVENLABS_API_KEY || "",
