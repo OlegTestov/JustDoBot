@@ -58,12 +58,29 @@ export async function checkImageExists(image: string): Promise<boolean> {
   return exitCode === 0;
 }
 
+/** Pre-pull an image so that subsequent build/run commands find it cached.
+ *  This avoids TLS issues in Docker Desktop's build proxy. */
+export async function pullImage(image: string): Promise<void> {
+  if (await checkImageExists(image)) return;
+  logger.info({ image }, "Pulling image...");
+  const { exitCode } = await dockerRun(["pull", image], { timeoutMs: 300_000 });
+  if (exitCode !== 0) logger.warn({ image }, "docker pull failed — build may still succeed if cached");
+}
+
 /** Build sandbox image from Dockerfile */
 export async function buildSandboxImage(
   dockerfilePath: string,
   contextDir: string,
   imageName: string,
 ): Promise<void> {
+  // Pre-pull base image to avoid TLS issues during build
+  try {
+    const content = await Bun.file(dockerfilePath).text();
+    const match = content.match(/^FROM\s+(\S+)/m);
+    if (match) await pullImage(match[1]);
+  } catch {
+    // Non-critical — build may still work with cached image
+  }
   logger.info({ imageName }, "Building sandbox image (may take a few minutes)...");
   const { exitCode, stderr } = await dockerRun(
     ["build", "-t", imageName, "-f", dockerfilePath, contextDir],
@@ -185,6 +202,7 @@ export async function startSandboxStack(config: SandboxConfig): Promise<void> {
   // 5. Start proxy container (if not running)
   const proxyStatus = await getContainerStatus(config.proxyContainerName);
   if (proxyStatus === "not_found") {
+    await pullImage(config.proxyImage);
     await dockerRun([
       "run",
       "-d",

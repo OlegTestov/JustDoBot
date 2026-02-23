@@ -51,7 +51,7 @@ src/
     voice/                 # STT/TTS providers, Twilio calls
     code-executor/docker/  # Docker sandbox for code execution
     collectors/            # Google, goals, vault change collectors
-    embeddings/            # OpenAI embedding provider
+    embeddings/local/      # Local EmbeddingGemma-300m ONNX embedding provider
 tests/                     # Mirrors src/ structure
 ```
 

@@ -57,10 +57,7 @@ const Stage1ConfigSchema = z.object({
   }),
   embedding: z
     .object({
-      enabled: z.boolean().default(false),
-      type: z.enum(["openai", "local"]).default("openai"),
-      model: z.string().default("text-embedding-3-small"),
-      dimensions: z.number().default(1536),
+      cache_dir: z.string().default("./data/models"),
     })
     .default({}),
   backup: z

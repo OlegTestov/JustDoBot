@@ -5,14 +5,12 @@
  * Usage:
  *   bun run scripts/re-embed.ts
  *   bun run scripts/re-embed.ts --dry-run
- *
- * Requires: OPENAI_API_KEY in .env and embedding.enabled: true in config.
  */
 
 import { parseArgs } from "node:util";
 import { loadConfig } from "../src/config";
 import { SqliteMemoryProvider } from "../src/plugins/database/sqlite/index";
-import { OpenAIEmbeddingProvider } from "../src/plugins/embeddings/openai/index";
+import { LocalEmbeddingProvider } from "../src/plugins/embeddings/local/index";
 
 const { values } = parseArgs({
   args: Bun.argv.slice(2),
@@ -26,17 +24,12 @@ const dryRun = values["dry-run"] ?? false;
 async function main() {
   const config = loadConfig();
 
-  if (!config.embedding.enabled) {
-    console.log("Embedding is disabled in config. Enable it first.");
-    process.exit(1);
-  }
-
   // Init database
   const db = new SqliteMemoryProvider();
   await db.init({ database: config.database } as Record<string, unknown>);
 
   // Init embedding provider
-  const embedder = new OpenAIEmbeddingProvider();
+  const embedder = new LocalEmbeddingProvider();
   await embedder.init({ embedding: config.embedding } as Record<string, unknown>);
 
   const vecRepo = db.getVecRepo();

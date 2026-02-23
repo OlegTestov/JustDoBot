@@ -70,7 +70,7 @@ export async function buildContext(
   let queryEmbedding: number[] | null = null;
   if (embeddingProvider && userMessage) {
     try {
-      queryEmbedding = await embeddingProvider.embed(userMessage);
+      queryEmbedding = await embeddingProvider.embed(userMessage, "query");
     } catch {
       // Embedding failed, continue with FTS only
     }

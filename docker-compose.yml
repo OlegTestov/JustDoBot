@@ -11,6 +11,7 @@ services:
       - WORKSPACE_HOST_PATH=${WORKSPACE_HOST_PATH:-${PWD}/workspace}
       - DATA_HOST_PATH=${DATA_HOST_PATH:-${PWD}/data}
       - CLAUDE_CONFIG_HOST_PATH=${CLAUDE_CONFIG_HOST_PATH:-${HOME}/.claude}
+      - PROJECT_HOST_PATH=${PROJECT_HOST_PATH:-${PWD}}
     # Stage 6: Docker socket group (run `stat -c '%g' /var/run/docker.sock` on host)
     group_add:
       - "${DOCKER_GID:-0}"
@@ -34,5 +35,5 @@ services:
     deploy:
       resources:
         limits:
-          memory: 512M
+          memory: 1G
           cpus: '1.0'

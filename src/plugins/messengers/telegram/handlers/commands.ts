@@ -194,14 +194,23 @@ export function registerCommands(
         const health = await deps.codeExecutor.healthCheck();
         const projects = await deps.codeExecutor.listProjects();
         const totalCost = projects.reduce((sum, p) => sum + (p.totalCostUsd ?? 0), 0);
-        const running = deps.codeExecutor.getRunningTaskCount();
+        const statusIcon = (s: string) =>
+          s === "running" ? "\u2705" : s === "stopped" ? "\u{1F534}" : "\u274c";
+        const containerLabels = {
+          running: deps.t("cmd.status.container.running"),
+          stopped: deps.t("cmd.status.container.stopped"),
+          not_found: deps.t("cmd.status.container.notFound"),
+        } as Record<string, string>;
+        const statusLabel = (s: string) => containerLabels[s] ?? s;
         lines.push(
           "",
           `\u{1F528} <b>Code Agent</b>`,
-          `Sandbox: ${health.healthy ? "\u2705 running" : `\u274c ${health.message}`}`,
-          `Projects: ${projects.length}`,
-          `Running tasks: ${running}`,
-          `Total cost: $${totalCost.toFixed(3)}`,
+          `${deps.t("cmd.status.sandbox")}: ${statusIcon(health.sandboxStatus)} ${statusLabel(health.sandboxStatus)}`,
+          `${deps.t("cmd.status.proxy")}: ${statusIcon(health.proxyStatus)} ${statusLabel(health.proxyStatus)}`,
+          `${deps.t("cmd.status.sandboxImage")}: ${(await deps.codeExecutor.checkSandboxImage()) ? "\u2705" : "\u274c"}`,
+          `${deps.t("cmd.status.runningTasks")}: ${health.runningTasks}`,
+          `${deps.t("cmd.status.projects")}: ${projects.length}`,
+          `${deps.t("cmd.status.totalCost")}: $${totalCost.toFixed(3)}`,
         );
       }
 
@@ -369,7 +378,7 @@ export function registerCommands(
       let embedding: number[] | null = null;
       if (deps.embeddingProvider) {
         try {
-          embedding = await deps.embeddingProvider.embed(query);
+          embedding = await deps.embeddingProvider.embed(query, "query");
         } catch {
           /* FTS only fallback */
         }
@@ -443,7 +452,11 @@ export function registerCommands(
     if (!deps.codeExecutor) {
       await ctx.reply(
         deps.codeExecutorError
-          ? deps.t("code.dockerUnavailable", { error: deps.codeExecutorError })
+          ? deps.t("code.startupFailed", {
+              error: deps.codeExecutorError,
+              restartCmd: "bun run docker",
+              rebuildCmd: "bun run docker:build",
+            })
           : deps.t("code.unavailable"),
       );
       return;
@@ -476,7 +489,11 @@ export function registerCommands(
     if (!deps.codeExecutor) {
       await ctx.reply(
         deps.codeExecutorError
-          ? deps.t("code.dockerUnavailable", { error: deps.codeExecutorError })
+          ? deps.t("code.startupFailed", {
+              error: deps.codeExecutorError,
+              restartCmd: "bun run docker",
+              rebuildCmd: "bun run docker:build",
+            })
           : deps.t("code.unavailable"),
       );
       return;
@@ -498,7 +515,11 @@ export function registerCommands(
     if (!deps.codeExecutor) {
       await ctx.reply(
         deps.codeExecutorError
-          ? deps.t("code.dockerUnavailable", { error: deps.codeExecutorError })
+          ? deps.t("code.startupFailed", {
+              error: deps.codeExecutorError,
+              restartCmd: "bun run docker",
+              rebuildCmd: "bun run docker:build",
+            })
           : deps.t("code.unavailable"),
       );
       return;

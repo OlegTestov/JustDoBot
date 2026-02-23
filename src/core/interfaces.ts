@@ -205,8 +205,8 @@ export interface IMessenger extends IPlugin {
 
 // Stage 2+
 export interface IEmbeddingProvider extends IPlugin {
-  embed(text: string): Promise<number[]>;
-  embedBatch(texts: string[]): Promise<number[][]>;
+  embed(text: string, purpose?: "query" | "document"): Promise<number[]>;
+  embedBatch(texts: string[], purpose?: "query" | "document"): Promise<number[][]>;
   dimensions: number;
 }
 
@@ -277,6 +277,12 @@ export interface TaskCallbacks {
   onError: (error: string, projectName: string) => Promise<void>;
 }
 
+export interface ContainerHealthStatus extends HealthStatus {
+  sandboxStatus: "running" | "stopped" | "not_found";
+  proxyStatus: "running" | "stopped" | "not_found";
+  runningTasks: number;
+}
+
 export interface ICodeExecutor extends IPlugin {
   runTaskInBackground(
     projectName: string,
@@ -295,6 +301,13 @@ export interface ICodeExecutor extends IPlugin {
   listProjects(userId?: string): Promise<CodeProject[]>;
 
   destroySandbox(): Promise<void>;
+  healthCheck(): Promise<ContainerHealthStatus>;
+  startHealthMonitor(
+    intervalMs: number,
+    onHealthChange: (healthy: boolean, status: ContainerHealthStatus) => void,
+  ): void;
+  stopHealthMonitor(): void;
+  checkSandboxImage(): Promise<boolean>;
 
   pushCredentials?(credentialsJson: string): Promise<void>;
 }

@@ -386,6 +386,15 @@ else
   log_ok "ffmpeg already installed"
 fi
 
+# Download embedding model (~200 MB, cached in data/models/)
+echo "  Downloading embedding model (~200 MB, one-time)..."
+mkdir -p data/models
+if bun run scripts/download-model.ts </dev/null 2>/dev/null; then
+  log_ok "Embedding model downloaded"
+else
+  log_warn "Model download failed — will auto-download on first bot start"
+fi
+
 # ─── Step 8: Start setup panel ───────────────────────────────────
 
 log_step "Starting setup panel..."

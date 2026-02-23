@@ -174,8 +174,6 @@ const totalSteps = 6;
 let _tokenVerified = false;
 let _tokenExistsOnServer = false;
 let _maskedToken = "";
-let _openaiKeyExistsOnServer = false;
-let _maskedOpenaiKey = "";
 let _claudeAuthDetected = false;
 let _googlePollId = null;
 let _googleConnected = false;
@@ -187,8 +185,6 @@ const state = {
   language: "en",
   timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC",
   model: "claude-sonnet-4-6",
-  embeddingsEnabled: false,
-  openaiKey: "",
   vaultEnabled: false,
   vaultPath: "",
   proactiveEnabled: false,
@@ -258,10 +254,6 @@ function bindInputListeners() {
 
   document.getElementById("language").addEventListener("change", function () {
     state.language = this.value;
-  });
-
-  document.getElementById("openai-key").addEventListener("input", function () {
-    state.openaiKey = this.value.trim();
   });
 
   document.getElementById("vault-path").addEventListener("input", function () {
@@ -412,19 +404,6 @@ function populateFromState(s) {
       cards[i].classList.toggle("selected", cards[i].getAttribute("data-model") === s.model);
     }
   }
-  if (s.embeddingsEnabled) {
-    document.getElementById("toggle-embeddings").checked = true;
-    toggleSection("embeddings");
-    state.embeddingsEnabled = true;
-  }
-  // OpenAI key: masked — show as placeholder
-  if (s.openaiKeySet) {
-    _openaiKeyExistsOnServer = true;
-    _maskedOpenaiKey = s.openaiKey;
-    document.getElementById("openai-key").placeholder = t("status.alreadyConfigured", {
-      value: s.openaiKey,
-    });
-  }
   if (s.vaultEnabled) {
     document.getElementById("toggle-vault").checked = true;
     toggleSection("vault");
@@ -514,13 +493,8 @@ function populateFromState(s) {
   updateClaudeAuthStatus();
   validateStep1();
 
-  // Update run commands with project directory
-  var cmdStart = document.querySelector("#success-panel .cmd-text");
-  var cmdDocker = document.querySelectorAll("#success-panel .cmd-text")[1];
-  if (s.projectDir) {
-    if (cmdStart) cmdStart.textContent = `cd ${s.projectDir} && bun run start`;
-    if (cmdDocker) cmdDocker.textContent = `cd ${s.projectDir} && bun run docker`;
-  }
+  // Store project directory for use in doSave()
+  state.projectDir = s.projectDir || "";
 }
 
 /* ──────────────────────────────────
@@ -648,9 +622,21 @@ function doSave(btn) {
 
       if (data.success) {
         document.getElementById("save-section").style.display = "none";
-        document.getElementById("success-panel").classList.add("visible");
         document.getElementById("nav-step-6").style.display = "none";
+        document.getElementById("success-panel").classList.add("visible");
         showToast(t("success.save"), "success");
+
+        // Render diagnostics into save-doctor-results
+        if (data.checks) {
+          renderChecksInto("save-doctor-results", data.checks);
+        }
+
+        // Set dynamic paths in commands
+        if (state.projectDir) {
+          setCmd("cmd-local-start", `cd ${state.projectDir} && bun run start`);
+          setCmd("cmd-docker-stop", `cd ${state.projectDir} && bun run docker-stop`);
+          setCmd("cmd-docker-restart", `cd ${state.projectDir} && bun run docker`);
+        }
       } else {
         showToast(data.message || t("error.save.failed"), "error");
       }
@@ -658,6 +644,59 @@ function doSave(btn) {
     .catch(() => {
       btn.disabled = false;
       btn.textContent = t("btn.save");
+      showToast(t("error.save.serverDown"), "error");
+    });
+}
+
+function setCmd(id, text) {
+  var el = document.getElementById(id);
+  if (el) el.textContent = text;
+}
+
+function renderChecksInto(targetId, checks) {
+  var el = document.getElementById(targetId);
+  if (!el) return;
+  var html = "";
+  var statusLabels = {
+    ok: t("doctor.ok"),
+    warn: t("doctor.warn"),
+    fail: t("doctor.fail"),
+    skip: t("doctor.skip"),
+  };
+  var i, c, badge;
+  for (i = 0; i < checks.length; i++) {
+    c = checks[i];
+    badge = statusLabels[c.status] || c.status.toUpperCase();
+    html += '<div class="doctor-item">';
+    html += `<span class="doctor-badge ${escapeAttr(c.status)}">${escapeHtml(badge)}</span>`;
+    html += `<span>${escapeHtml(c.name)}${c.message ? ` &mdash; ${escapeHtml(c.message)}` : ""}</span>`;
+    html += "</div>";
+  }
+  el.innerHTML = html;
+  el.classList.add("visible");
+}
+
+function launchDocker() {
+  var btn = document.getElementById("btn-docker-launch");
+  btn.disabled = true;
+  btn.innerHTML = `<span class="spinner"></span> ${t("status.launching")}`;
+
+  fetch("/api/docker-launch", { method: "POST" })
+    .then((r) => r.json())
+    .then((data) => {
+      if (data.ok) {
+        document.getElementById("docker-launch-section").style.display = "none";
+        document.getElementById("docker-success").style.display = "block";
+        showToast(t("success.dockerLaunch"), "success");
+      } else {
+        btn.disabled = false;
+        btn.textContent = t("btn.dockerLaunch");
+        showToast(data.message || t("error.dockerLaunch"), "error");
+      }
+    })
+    .catch(() => {
+      btn.disabled = false;
+      btn.textContent = t("btn.dockerLaunch");
       showToast(t("error.save.serverDown"), "error");
     });
 }
@@ -689,71 +728,6 @@ function renderPreValidation(data) {
     html += '<div class="presave-blocker">';
     html += `<p>${escapeHtml(t("presave.blockMessage"))}</p>`;
     html += "</div>";
-  }
-
-  el.innerHTML = html;
-  el.classList.add("visible");
-}
-
-/* ──────────────────────────────────
-   API: Doctor
-────────────────────────────────── */
-function runDoctor() {
-  const btn = document.getElementById("btn-doctor");
-  btn.disabled = true;
-  btn.innerHTML = `<span class="spinner dark"></span> ${t("status.checking")}`;
-
-  const resultsEl = document.getElementById("doctor-results");
-  resultsEl.classList.remove("visible");
-
-  fetch("/api/doctor")
-    .then((r) => {
-      if (!r.ok) {
-        return r.text().then((text) => {
-          try {
-            return JSON.parse(text);
-          } catch (_e) {
-            return { checks: [], summary: `Server error: ${r.status}` };
-          }
-        });
-      }
-      return r.json();
-    })
-    .then((data) => {
-      btn.disabled = false;
-      btn.textContent = t("btn.doctor");
-      renderDoctorResults(data);
-    })
-    .catch(() => {
-      btn.disabled = false;
-      btn.textContent = t("btn.doctor");
-      showToast(t("error.doctor.serverDown"), "error");
-    });
-}
-
-function renderDoctorResults(data) {
-  const el = document.getElementById("doctor-results");
-  let html = "";
-
-  const statusLabels = {
-    ok: t("doctor.ok"),
-    warn: t("doctor.warn"),
-    fail: t("doctor.fail"),
-    skip: t("doctor.skip"),
-  };
-  const checks = data.checks || [];
-
-  for (let i = 0; i < checks.length; i++) {
-    const c = checks[i];
-    const badge = statusLabels[c.status] || c.status.toUpperCase();
-    html += '<div class="doctor-item">';
-    html += `<span class="doctor-badge ${escapeAttr(c.status)}">${escapeHtml(badge)}</span>`;
-    html += `<span>${escapeHtml(c.name)}${c.message ? ` &mdash; ${escapeHtml(c.message)}` : ""}</span>`;
-    html += "</div>";
-  }
-
-  if (data.summary) {
-    html += `<div class="doctor-summary">${escapeHtml(data.summary)}</div>`;
   }
 
   el.innerHTML = html;
@@ -976,9 +950,7 @@ function toggleSection(section) {
 
   detail.classList.toggle("open", isOpen);
 
-  if (section === "embeddings") {
-    state.embeddingsEnabled = isOpen;
-  } else if (section === "vault") {
+  if (section === "vault") {
     state.vaultEnabled = isOpen;
     if (isOpen) detectVaults();
   } else if (section === "proactive") {
@@ -1112,16 +1084,6 @@ function buildConfigSummary() {
     });
   }
 
-  if (state.embeddingsEnabled) {
-    rows.push({ key: t("summary.semanticSearch"), val: t("status.enabled") });
-    const openaiDisplay = state.openaiKey
-      ? maskKey(state.openaiKey)
-      : _openaiKeyExistsOnServer
-        ? `<code>${escapeHtml(_maskedOpenaiKey)}</code>`
-        : notSetHtml;
-    rows.push({ key: t("summary.openaiKey"), val: openaiDisplay });
-  }
-
   if (state.vaultEnabled) {
     rows.push({ key: t("summary.obsidianVault"), val: t("status.enabled") });
     rows.push({
@@ -1196,9 +1158,7 @@ function collectState() {
   state.token = document.getElementById("token").value.trim();
   state.userId = document.getElementById("user-id").value.trim();
   state.language = document.getElementById("language").value;
-  state.openaiKey = document.getElementById("openai-key").value.trim();
   state.vaultPath = document.getElementById("vault-path").value.trim();
-  state.embeddingsEnabled = document.getElementById("toggle-embeddings").checked;
   state.vaultEnabled = document.getElementById("toggle-vault").checked;
   state.proactiveEnabled = document.getElementById("toggle-proactive").checked;
   state.proactiveInterval = parseInt(document.getElementById("proactive-interval").value, 10) || 5;

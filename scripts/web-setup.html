@@ -169,24 +169,6 @@
 
         <div class="toggle-row">
           <div class="toggle-info">
-            <h3 data-i18n="step3.embeddings.title">Semantic Search</h3>
-            <p data-i18n="step3.embeddings.desc">Enable AI-powered memory search using OpenAI embeddings</p>
-          </div>
-          <label class="toggle-switch">
-            <input type="checkbox" id="toggle-embeddings" onchange="toggleSection('embeddings')">
-            <span class="toggle-slider"></span>
-          </label>
-        </div>
-        <div class="toggle-detail" id="detail-embeddings">
-          <div class="field">
-            <label for="openai-key" data-i18n="step3.embeddings.key.label">OpenAI API Key</label>
-            <div class="hint" data-i18n="step3.embeddings.key.hint">Required for embedding generation</div>
-            <input type="password" id="openai-key" placeholder="sk-..." autocomplete="off" spellcheck="false">
-          </div>
-        </div>
-
-        <div class="toggle-row">
-          <div class="toggle-info">
             <h3 data-i18n="step3.vault.title">Obsidian Vault</h3>
             <p data-i18n="step3.vault.desc">Connect your Obsidian vault for knowledge search</p>
           </div>
@@ -422,39 +404,45 @@
         <div class="success-panel" id="success-panel">
           <div class="success-icon"></div>
           <h3 data-i18n="step6.success.title">Configuration Saved</h3>
-          <p data-i18n="step6.success.subtitle">Your bot is ready to run.</p>
 
-          <div class="run-commands" style="text-align:center; margin-bottom:16px">
-            <h4 data-i18n="step6.run.terminal.heading">Before you start</h4>
-            <p style="color:var(--text-secondary); margin:0; line-height:1.6" data-i18n="step6.run.terminal.instructions">Close your current terminal window and open a new one.<br>This is needed so your system recognizes the tools we just installed.</p>
-          </div>
+          <!-- Diagnostics results from save -->
+          <div class="doctor-results" id="save-doctor-results"></div>
 
-          <div class="run-commands">
-            <h4 data-i18n="step6.run.local.heading">Then, in the new terminal run:</h4>
-            <div class="cmd-block">
-              <div>
-                <div class="cmd-label" data-i18n="step6.run.local.label">Start the bot</div>
-                <span class="cmd-text">cd ~/JustDoBot && bun run start</span>
-              </div>
-            </div>
-          </div>
-
-          <div class="run-commands">
-            <h4 data-i18n="step6.run.docker.heading">Run with Docker</h4>
-            <div class="cmd-block">
-              <div>
-                <div class="cmd-label" data-i18n="step6.run.docker.label">Build and start in background</div>
-                <span class="cmd-text">cd ~/JustDoBot && bun run docker</span>
-              </div>
-            </div>
-          </div>
-
-          <!-- Doctor -->
-          <div class="doctor-section">
-            <button class="btn btn-secondary" id="btn-doctor" onclick="runDoctor()" data-i18n="btn.doctor">
-              Run Diagnostics
+          <!-- Docker launch button + note -->
+          <div id="docker-launch-section" style="text-align:center; margin:20px 0">
+            <button class="btn btn-success" id="btn-docker-launch" onclick="launchDocker()" data-i18n="btn.dockerLaunch">
+              Launch in Docker
             </button>
-            <div class="doctor-results" id="doctor-results"></div>
+            <p style="color:var(--text-secondary); margin:8px 0 0; font-size:0.9em" data-i18n="step6.launch.note">
+              First launch may take a couple of minutes
+            </p>
+          </div>
+
+          <!-- Docker success (hidden until launch succeeds) -->
+          <div id="docker-success" style="display:none">
+            <p style="color:var(--success); text-align:center; font-weight:600; margin:16px 0" data-i18n="step6.launch.success">
+              Bot is running! Check Telegram.
+            </p>
+            <div class="run-commands">
+              <div class="cmd-block"><div>
+                <div class="cmd-label" data-i18n="step6.launch.stop">Stop</div>
+                <span class="cmd-text" id="cmd-docker-stop">bun run docker-stop</span>
+              </div></div>
+              <div class="cmd-block"><div>
+                <div class="cmd-label" data-i18n="step6.launch.restart">Restart</div>
+                <span class="cmd-text" id="cmd-docker-restart">bun run docker</span>
+              </div></div>
+            </div>
+          </div>
+
+          <!-- Alternative: local dev -->
+          <div class="run-commands" style="margin-top:24px">
+            <p style="color:var(--text-secondary); font-size:0.9em; margin:0 0 8px" data-i18n="step6.alt.label">
+              For development, run directly:
+            </p>
+            <div class="cmd-block"><div>
+              <span class="cmd-text" id="cmd-local-start">bun run start</span>
+            </div></div>
           </div>
         </div>
 

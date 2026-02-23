@@ -12,8 +12,9 @@
   "scripts": {
     "dev": "bun run --watch src/index.ts",
     "start": "bun run src/index.ts",
-    "docker-start": "bun run scripts/docker-start.ts",
-    "docker": "bun run docker-start",
+    "docker": "bun run scripts/docker-start.ts",
+    "docker:build": "bun run scripts/docker-start.ts -- --build",
+    "docker-stop": "docker compose down",
     "setup": "bun run scripts/setup.ts",
     "web-setup": "bun run scripts/web-setup.ts",
     "doctor": "bun run scripts/doctor.ts",
@@ -23,11 +24,13 @@
     "lint:fix": "biome check --write ./src ./tests ./scripts",
     "check": "tsc --noEmit && biome check ./src ./tests ./scripts",
     "healthcheck": "bun run src/healthcheck.ts",
-    "backup": "bun run scripts/backup.ts"
+    "backup": "bun run scripts/backup.ts",
+    "download-model": "bun run scripts/download-model.ts"
   },
   "dependencies": {
     "@anthropic-ai/claude-agent-sdk": "^0.2.47",
     "@elevenlabs/elevenlabs-js": "^2.35.0",
+    "@huggingface/transformers": "^3.4.0",
     "grammy": "^1.35.0",
     "mammoth": "^1.11.0",
     "pdf-parse": "^1.1.1",

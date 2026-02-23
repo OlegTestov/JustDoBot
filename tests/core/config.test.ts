@@ -57,7 +57,7 @@ describe("loadConfig", () => {
     expect(config.context.max_tokens).toBe(12000);
     expect(config.streaming.enabled).toBe(true);
     expect(config.logging.level).toBe("info");
-    expect(config.embedding.enabled).toBe(false);
+    expect(config.embedding.cache_dir).toBe("./data/models");
     expect(config.vault.enabled).toBe(false);
     expect(config.proactive.enabled).toBe(false);
     expect(config.code_execution.enabled).toBe(false);

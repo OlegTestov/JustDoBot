@@ -2,7 +2,7 @@ import path from "node:path";
 import type { AppConfig } from "../../../config";
 import type {
   CodeProject,
-  HealthStatus,
+  ContainerHealthStatus,
   ICodeExecutor,
   PluginConfig,
   TaskCallbacks,
@@ -39,6 +39,8 @@ export class DockerCodeExecutor implements ICodeExecutor {
     { proc: ReturnType<typeof Bun.spawn>; abort: AbortController }
   >();
   private sandboxConfig!: SandboxConfig;
+  private healthMonitorHandle: Timer | null = null;
+  private lastHealthy = true;
 
   setDeps(deps: { projectRepo: ProjectRepository; codeTaskRepo: CodeTaskRepository }): void {
     this.projectRepo = deps.projectRepo;
@@ -441,19 +443,70 @@ export class DockerCodeExecutor implements ICodeExecutor {
   }
 
   async destroy(): Promise<void> {
+    this.stopHealthMonitor();
     await this.destroySandbox();
   }
 
-  async healthCheck(): Promise<HealthStatus> {
-    const status = await getContainerStatus(this.sandboxConfig.containerName);
+  async healthCheck(): Promise<ContainerHealthStatus> {
+    const sandboxStatus = await getContainerStatus(this.sandboxConfig.containerName);
     const proxyStatus = await getContainerStatus(this.proxyContainerName);
-    const healthy = status === "running" && proxyStatus === "running";
+    const healthy = sandboxStatus === "running" && proxyStatus === "running";
     return {
       healthy,
       message: healthy
-        ? `Sandbox: ${status}, Proxy: ${proxyStatus}, Tasks: ${this.runningTasks.size}`
-        : `Sandbox: ${status}, Proxy: ${proxyStatus}`,
+        ? `Sandbox: ${sandboxStatus}, Proxy: ${proxyStatus}, Tasks: ${this.runningTasks.size}`
+        : `Sandbox: ${sandboxStatus}, Proxy: ${proxyStatus}`,
       lastCheck: new Date(),
+      sandboxStatus,
+      proxyStatus,
+      runningTasks: this.runningTasks.size,
     };
+  }
+
+  startHealthMonitor(
+    intervalMs: number,
+    onHealthChange: (healthy: boolean, status: ContainerHealthStatus) => void,
+  ): void {
+    const logger = getLogger();
+    this.healthMonitorHandle = setInterval(async () => {
+      try {
+        const status = await this.healthCheck();
+        if (!status.healthy && this.lastHealthy) {
+          // Transition healthy → unhealthy: try auto-recovery
+          logger.warn(status, "Containers unhealthy — attempting auto-recovery");
+          try {
+            await startSandboxStack(this.sandboxConfig);
+            const recovered = await this.healthCheck();
+            if (recovered.healthy) {
+              logger.info("Auto-recovery succeeded");
+              onHealthChange(true, recovered);
+              return;
+            }
+          } catch (err) {
+            logger.error({ err }, "Auto-recovery failed");
+          }
+          this.lastHealthy = false;
+          onHealthChange(false, status);
+        } else if (status.healthy && !this.lastHealthy) {
+          // Transition unhealthy → healthy
+          this.lastHealthy = true;
+          logger.info("Containers recovered");
+          onHealthChange(true, status);
+        }
+      } catch (err) {
+        logger.warn({ err }, "Health monitor check failed");
+      }
+    }, intervalMs);
+  }
+
+  stopHealthMonitor(): void {
+    if (this.healthMonitorHandle) {
+      clearInterval(this.healthMonitorHandle);
+      this.healthMonitorHandle = null;
+    }
+  }
+
+  async checkSandboxImage(): Promise<boolean> {
+    return checkImageExists(this.config.sandbox_image);
   }
 }

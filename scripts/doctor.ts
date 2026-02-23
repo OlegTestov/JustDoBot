@@ -323,53 +323,7 @@ export async function runDiagnostics(): Promise<DoctorCheck[]> {
     });
   }
 
-  // 10. OpenAI
-  try {
-    const embeddingEnabled = config?.embedding?.enabled ?? false;
-    if (!embeddingEnabled) {
-      checks.push({
-        name: "OpenAI",
-        status: "skip",
-        message: "OpenAI embeddings disabled",
-      });
-    } else {
-      const apiKey = process.env.OPENAI_API_KEY;
-      if (!apiKey || apiKey.length === 0) {
-        checks.push({
-          name: "OpenAI",
-          status: "warn",
-          message: "Embeddings enabled but OPENAI_API_KEY is not set",
-        });
-      } else {
-        const resp = await fetch("https://api.openai.com/v1/models", {
-          headers: { Authorization: `Bearer ${apiKey}` },
-        });
-        if (resp.ok) {
-          checks.push({
-            name: "OpenAI",
-            status: "ok",
-            message: "OpenAI API key valid",
-          });
-        } else {
-          const data = (await resp.json()) as { error?: { message?: string } };
-          checks.push({
-            name: "OpenAI",
-            status: "warn",
-            message: `OpenAI API error: ${data.error?.message ?? `HTTP ${resp.status}`}`,
-          });
-        }
-      }
-    }
-  } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err);
-    checks.push({
-      name: "OpenAI",
-      status: "warn",
-      message: `OpenAI check failed: ${msg}`,
-    });
-  }
-
-  // 11. Docker (Code Execution)
+  // 10. Docker (Code Execution)
   try {
     const codeEnabled = config?.code_execution?.enabled ?? false;
     if (!codeEnabled) {
@@ -471,7 +425,7 @@ export async function runDiagnostics(): Promise<DoctorCheck[]> {
     });
   }
 
-  // 12. Vault
+  // 11. Vault
   try {
     const vaultEnabled = config?.vault?.enabled ?? false;
     if (!vaultEnabled) {

@@ -36,12 +36,9 @@ logging:
   level: "info"                   # debug | info | warn | error
   format: "pretty"                # "pretty" for dev, "json" for production/Docker
 
-# Optional: Semantic search via OpenAI embeddings
-# Improves memory and vault retrieval quality (~$0.02 per 1M tokens)
+# Embedding model cache directory (auto-downloaded)
 # embedding:
-#   enabled: true
-#   model: "text-embedding-3-small"
-#   dimensions: 1536
+#   cache_dir: "./data/models"
 
 # Optional: Obsidian vault integration
 # Bot indexes .md files and searches them during conversations

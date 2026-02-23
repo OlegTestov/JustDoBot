@@ -20,8 +20,8 @@ import { MemoryRepository } from "./memories";
 import { MessageRepository } from "./messages";
 import { ProjectRepository } from "./projects";
 import { STAGE1_DDL } from "./schema";
-import { STAGE2_DDL_CORE, STAGE2_DDL_VEC } from "./schema-stage2";
-import { STAGE3_DDL_CORE, STAGE3_DDL_VEC } from "./schema-stage3";
+import { STAGE2_DDL_CORE, stage2VecDDL } from "./schema-stage2";
+import { STAGE3_DDL_CORE, stage3VecDDL } from "./schema-stage3";
 import { migrateCheckInLogsAddCall, STAGE4_DDL_CORE } from "./schema-stage4";
 import { STAGE6_DDL_CORE } from "./schema-stage6";
 import { VaultRepository } from "./vault";
@@ -40,7 +40,7 @@ export class SqliteMemoryProvider implements IMemoryProvider {
   private projectRepo!: ProjectRepository;
   private codeTaskRepo!: CodeTaskRepository;
 
-  async init(config: PluginConfig): Promise<void> {
+  async init(config: PluginConfig, embeddingDimensions = 768): Promise<void> {
     const cfg = config as { database: { path: string } };
     const dbPath = cfg.database.path;
 
@@ -79,13 +79,13 @@ export class SqliteMemoryProvider implements IMemoryProvider {
     }
     this.vecRepo = new VectorRepository(this.db);
     if (this.vecRepo.isAvailable) {
-      this.db.exec(STAGE2_DDL_VEC);
+      this.migrateVecDimensions(embeddingDimensions);
     }
 
     // Stage 3 schema
     this.db.exec(STAGE3_DDL_CORE);
     if (this.vecRepo.isAvailable) {
-      this.db.exec(STAGE3_DDL_VEC);
+      this.db.exec(stage3VecDDL(embeddingDimensions));
     }
 
     // Stage 4 schema
@@ -105,6 +105,39 @@ export class SqliteMemoryProvider implements IMemoryProvider {
     this.codeTaskRepo = new CodeTaskRepository(this.db);
 
     getLogger().info({ path: dbPath }, "SQLite database initialized (Stage 6)");
+  }
+
+  /** Migrate vector tables when embedding dimensions change (e.g. 1536 → 768). */
+  private migrateVecDimensions(dimensions: number): void {
+    this.db.exec("CREATE TABLE IF NOT EXISTS bot_metadata (key TEXT PRIMARY KEY, value TEXT)");
+
+    const row = this.db
+      .prepare("SELECT value FROM bot_metadata WHERE key = 'embedding_dimensions'")
+      .get() as { value: string } | null;
+
+    const storedDims = row ? Number.parseInt(row.value, 10) : null;
+
+    if (storedDims === dimensions) {
+      // Dimensions match — just create tables if they don't exist yet
+      this.db.exec(stage2VecDDL(dimensions));
+      return;
+    }
+
+    // Dimensions changed (or first run with existing tables) — drop and recreate
+    getLogger().info(
+      { from: storedDims, to: dimensions },
+      "Embedding dimensions changed — recreating vector tables",
+    );
+    this.db.exec("DROP TABLE IF EXISTS vec_memories");
+    this.db.exec("DROP TABLE IF EXISTS vec_goals");
+    this.db.exec("DROP TABLE IF EXISTS vec_vault");
+
+    this.db.exec(stage2VecDDL(dimensions));
+    this.db
+      .prepare(
+        "INSERT OR REPLACE INTO bot_metadata (key, value) VALUES ('embedding_dimensions', $dims)",
+      )
+      .run({ $dims: String(dimensions) });
   }
 
   private static customSQLiteSet = false;

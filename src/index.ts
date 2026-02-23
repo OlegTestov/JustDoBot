@@ -10,7 +10,6 @@ import { buildContext } from "./core/context-builder";
 import type {
   ICodeExecutor,
   ICollector,
-  IEmbeddingProvider,
   ISTTProvider,
   ITTSProvider,
   IVaultProvider,
@@ -34,7 +33,7 @@ import { GoogleCollectorProvider } from "./plugins/collectors/google/index";
 import { VaultChangesCollector } from "./plugins/collectors/vault/index";
 import type { CheckInRepository } from "./plugins/database/sqlite/check-ins";
 import { SqliteMemoryProvider } from "./plugins/database/sqlite/index";
-import { OpenAIEmbeddingProvider } from "./plugins/embeddings/openai/index";
+import { LocalEmbeddingProvider } from "./plugins/embeddings/local/index";
 import {
   removePendingTTS,
   storeMessageText,
@@ -75,12 +74,9 @@ async function main() {
 
   registry.register("database", database);
 
-  // Stage 2: Conditional embedding provider
-  let embeddingProvider: IEmbeddingProvider | null = null;
-  if (config.embedding.enabled) {
-    embeddingProvider = new OpenAIEmbeddingProvider();
-    registry.register("embedding", embeddingProvider);
-  }
+  // Stage 2: Local embedding provider (always on, auto-downloads model)
+  const embeddingProvider = new LocalEmbeddingProvider();
+  registry.register("embedding", embeddingProvider);
 
   // Stage 3: Conditional vault provider
   let vaultProvider: IVaultProvider | null = null;
@@ -133,6 +129,27 @@ async function main() {
       await executor.init({ code_execution: config.code_execution } as Record<string, unknown>);
       codeExecutor = executor;
       logger.info("Code executor initialized");
+
+      // Start periodic health monitor (every 5 minutes)
+      const HEALTH_CHECK_INTERVAL_MS = 5 * 60 * 1000;
+      executor.startHealthMonitor(HEALTH_CHECK_INTERVAL_MS, (healthy, status) => {
+        const projectDir = process.env.PROJECT_HOST_PATH;
+        const cdPrefix = projectDir ? `cd ${projectDir} && ` : "";
+        const restartCmd = `${cdPrefix}bun run docker`;
+        const rebuildCmd = `${cdPrefix}bun run docker:build`;
+        for (const uid of config.messenger.allowed_users) {
+          const cid = Number(uid);
+          if (Number.isNaN(cid)) continue;
+          const msg = healthy
+            ? t("code.containerRecovered")
+            : t("code.containerDown", { details: status.message ?? "", restartCmd, rebuildCmd });
+          messenger
+            .sendMessage(cid, msg, { parse_mode: "HTML" })
+            .catch((e) =>
+              logger.warn({ err: e, chatId: cid }, "Failed to send health notification"),
+            );
+        }
+      });
 
       // Push refreshed OAuth credentials to sandbox after each refresh
       oauthRefreshManager.setOnRefresh((json) => {
@@ -565,11 +582,19 @@ async function main() {
 
   // Notify users if code executor was configured but failed to start
   if (codeExecutorError) {
+    const projectDir = process.env.PROJECT_HOST_PATH;
+    const cdPrefix = projectDir ? `cd ${projectDir} && ` : "";
+    const restartCmd = `${cdPrefix}bun run docker`;
+    const rebuildCmd = `${cdPrefix}bun run docker:build`;
     for (const userId of config.messenger.allowed_users) {
       const chatId = Number(userId);
       if (!Number.isNaN(chatId)) {
         messenger
-          .sendMessage(chatId, t("code.dockerUnavailable", { error: codeExecutorError }))
+          .sendMessage(
+            chatId,
+            t("code.startupFailed", { error: codeExecutorError, restartCmd, rebuildCmd }),
+            { parse_mode: "HTML" },
+          )
           .catch((err) => logger.warn({ err, chatId }, "Failed to send code executor warning"));
       }
     }
@@ -608,6 +633,7 @@ async function main() {
 
     await database.flush();
     if (codeExecutor) {
+      codeExecutor.stopHealthMonitor();
       try {
         await codeExecutor.destroy();
       } catch (err) {

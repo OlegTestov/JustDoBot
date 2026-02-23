@@ -151,10 +151,31 @@ function migrateCredentialsFromData(): void {
   }
 }
 
+function prePullBaseImages(): void {
+  const images = ["oven/bun:latest"];
+  for (const image of images) {
+    const check = Bun.spawnSync(["docker", "image", "inspect", image], {
+      stdout: "pipe",
+      stderr: "pipe",
+    });
+    if (check.exitCode !== 0) {
+      console.log(`Pulling ${image}...`);
+      Bun.spawnSync(["docker", "pull", image], {
+        stdout: "inherit",
+        stderr: "inherit",
+      });
+    }
+  }
+}
+
 async function main(): Promise<void> {
+  const build = process.argv.includes("--build");
   migrateCredentialsFromData();
   await ensureClaudeCredentials();
-  runCommand(["docker", "compose", "up", "-d", "--build", "--remove-orphans"], "docker compose up");
+  if (build) prePullBaseImages();
+  const args = ["docker", "compose", "up", "-d", "--remove-orphans"];
+  if (build) args.push("--build");
+  runCommand(args, build ? "docker compose up --build" : "docker compose up");
   console.log("Docker stack is up.");
 }
 

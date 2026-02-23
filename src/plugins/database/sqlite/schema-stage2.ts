@@ -71,14 +71,16 @@ END;
 `;
 
 // Vector tables — only executed if sqlite-vec is available
-export const STAGE2_DDL_VEC = `
+export function stage2VecDDL(dimensions: number): string {
+  return `
 CREATE VIRTUAL TABLE IF NOT EXISTS vec_memories USING vec0(
   memory_id INTEGER PRIMARY KEY,
-  embedding float[1536]
+  embedding float[${dimensions}]
 );
 
 CREATE VIRTUAL TABLE IF NOT EXISTS vec_goals USING vec0(
   goal_id INTEGER PRIMARY KEY,
-  embedding float[1536]
+  embedding float[${dimensions}]
 );
 `;
+}

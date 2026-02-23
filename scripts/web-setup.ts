@@ -85,9 +85,6 @@ async function handleStatus(): Promise<Response> {
       language: state.language,
       timezone: state.timezone,
       model: state.model,
-      embeddingsEnabled: state.embeddingEnabled,
-      openaiKey: state.openaiKey ? mask(state.openaiKey) : "",
-      openaiKeySet: state.openaiKey.length > 0,
       vaultEnabled: state.vaultEnabled,
       vaultPath: state.vaultPath,
       proactiveEnabled: state.proactiveEnabled,
@@ -132,8 +129,6 @@ async function handleSave(req: Request): Promise<Response> {
     language?: string;
     timezone?: string;
     model?: string;
-    embeddingsEnabled?: boolean;
-    openaiKey?: string;
     vaultEnabled?: boolean;
     vaultPath?: string;
     proactiveEnabled?: boolean;
@@ -161,7 +156,6 @@ async function handleSave(req: Request): Promise<Response> {
   // Fall back to existing .env values for secrets not re-entered
   const existingEnv = loadExistingEnv();
   const token = body.token || existingEnv.TELEGRAM_BOT_TOKEN || "";
-  const openaiKey = body.openaiKey || existingEnv.OPENAI_API_KEY || "";
   const googleClientId = body.googleClientId || existingEnv.GOOGLE_CLIENT_ID || "";
   const googleClientSecret = body.googleClientSecret || existingEnv.GOOGLE_CLIENT_SECRET || "";
   const geminiApiKey = body.geminiApiKey || existingEnv.GEMINI_API_KEY || "";
@@ -183,8 +177,6 @@ async function handleSave(req: Request): Promise<Response> {
     model: body.model || "claude-sonnet-4-6",
     language: body.language || "en",
     timezone: body.timezone || "UTC",
-    embeddingEnabled: body.embeddingsEnabled ?? false,
-    openaiKey,
     vaultEnabled: body.vaultEnabled ?? false,
     vaultPath: body.vaultPath || "",
     vaultInclude: [],
@@ -220,7 +212,10 @@ async function handleSave(req: Request): Promise<Response> {
     if (!ok) {
       return jsonResponse({ success: false, message: "Missing required fields" });
     }
-    return jsonResponse({ success: true });
+
+    // Run diagnostics after save
+    const checks = await runDiagnostics();
+    return jsonResponse({ success: true, checks });
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     return jsonResponse({ success: false, message: msg }, 500);
@@ -245,6 +240,19 @@ async function handleDoctor(): Promise<Response> {
     checks,
     summary: parts.join(", "),
   });
+}
+
+// ─── Docker Launch ───────────────────────────────────────────────
+
+function handleDockerLaunch(): Response {
+  const proc = Bun.spawnSync(["bun", "run", "docker:build"], {
+    stdout: "pipe",
+    stderr: "pipe",
+    timeout: 300_000,
+  });
+  return proc.exitCode === 0
+    ? jsonResponse({ ok: true })
+    : jsonResponse({ ok: false, message: proc.stderr.toString().trim() });
 }
 
 // ─── Google OAuth ────────────────────────────────────────────────
@@ -420,22 +428,7 @@ async function handlePreValidate(req: Request): Promise<Response> {
     });
   }
 
-  // 5. WARNING: OpenAI key if embeddings enabled
-  if (body.embeddingsEnabled) {
-    const openaiKey = (body.openaiKey as string) || existingEnv.OPENAI_API_KEY || "";
-    if (!openaiKey) {
-      checks.push({
-        name: "OpenAI Key",
-        status: "warn",
-        message: "Embeddings enabled but no API key provided",
-        blocking: false,
-      });
-    } else {
-      checks.push({ name: "OpenAI Key", status: "ok", message: "Key provided", blocking: false });
-    }
-  }
-
-  // 6. WARNING: Vault path if vault enabled
+  // 5. WARNING: Vault path if vault enabled
   if (body.vaultEnabled) {
     const vaultPath = (body.vaultPath as string) || "";
     if (!vaultPath) {
@@ -506,16 +499,6 @@ async function handlePreValidate(req: Request): Promise<Response> {
     } else {
       checks.push({ name: "Gemini Key", status: "ok", message: "Key provided", blocking: false });
     }
-  }
-
-  // 9. WARNING: sqlite-vec if embeddings enabled
-  if (body.embeddingsEnabled && !envStatus.sqliteVecAvailable) {
-    checks.push({
-      name: "sqlite-vec",
-      status: "warn",
-      message: "sqlite-vec not available \u2014 vector search will fall back to keyword search",
-      blocking: false,
-    });
   }
 
   const hasBlockingErrors = checks.some((c) => c.blocking && c.status === "fail");
@@ -655,6 +638,10 @@ async function handleRequest(req: Request): Promise<Response> {
 
     if (pathname === "/api/docker-status" && method === "GET") {
       return handleDockerStatus();
+    }
+
+    if (pathname === "/api/docker-launch" && method === "POST") {
+      return handleDockerLaunch();
     }
 
     if (pathname === "/api/platform-info" && method === "GET") {

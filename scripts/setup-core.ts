@@ -11,8 +11,8 @@ import {
 import * as sqliteVec from "sqlite-vec";
 import { parse as parseYaml } from "yaml";
 import { STAGE1_DDL } from "../src/plugins/database/sqlite/schema";
-import { STAGE2_DDL_CORE, STAGE2_DDL_VEC } from "../src/plugins/database/sqlite/schema-stage2";
-import { STAGE3_DDL_CORE, STAGE3_DDL_VEC } from "../src/plugins/database/sqlite/schema-stage3";
+import { STAGE2_DDL_CORE, stage2VecDDL } from "../src/plugins/database/sqlite/schema-stage2";
+import { STAGE3_DDL_CORE, stage3VecDDL } from "../src/plugins/database/sqlite/schema-stage3";
 import { STAGE4_DDL_CORE } from "../src/plugins/database/sqlite/schema-stage4";
 import { STAGE6_DDL_CORE } from "../src/plugins/database/sqlite/schema-stage6";
 
@@ -27,10 +27,7 @@ export interface WizardState {
   model: string;
   language: string;
   timezone: string;
-  // Section 2: Semantic Search
-  embeddingEnabled: boolean;
-  openaiKey: string;
-  // Section 3: Obsidian Vault
+  // Section 2: Obsidian Vault
   vaultEnabled: boolean;
   vaultPath: string;
   vaultInclude: string[];
@@ -153,7 +150,6 @@ export function initState(
   const messenger = config?.messenger as Record<string, unknown> | undefined;
   const ai = config?.ai_engine as Record<string, unknown> | undefined;
   const logging = config?.logging as Record<string, unknown> | undefined;
-  const embedding = config?.embedding as Record<string, unknown> | undefined;
   const vault = config?.vault as Record<string, unknown> | undefined;
   const proactive = config?.proactive as Record<string, unknown> | undefined;
   const collectors = config?.collectors as Record<string, unknown> | undefined;
@@ -176,9 +172,6 @@ export function initState(
     language: (bot?.language as string) || "en",
     timezone: (bot?.timezone as string) || "UTC",
     // Section 2
-    embeddingEnabled: (embedding?.enabled as boolean) ?? false,
-    openaiKey: env.OPENAI_API_KEY || "",
-    // Section 3
     vaultEnabled: (vault?.enabled as boolean) ?? false,
     vaultPath: env.VAULT_PATH || (vault?.path as string) || "",
     vaultInclude: (vault?.include as string[]) || [],
@@ -445,9 +438,6 @@ export function saveClaudeCredentials(creds: ClaudeCredentials): void {
 
 export function generateEnvFile(state: WizardState): void {
   let envContent = `TELEGRAM_BOT_TOKEN=${state.telegramToken}\nALLOWED_USER_ID=${state.allowedUserId}\n`;
-  if (state.openaiKey) {
-    envContent += `OPENAI_API_KEY=${state.openaiKey}\n`;
-  }
   if (state.vaultEnabled && state.vaultPath) {
     envContent += `VAULT_PATH=${state.vaultPath}\n`;
   }
@@ -480,11 +470,6 @@ export function generateEnvFile(state: WizardState): void {
 export function generateConfigYaml(state: WizardState): string {
   const includeYaml = JSON.stringify(state.vaultInclude);
   const excludeYaml = JSON.stringify(state.vaultExclude);
-
-  const embeddingBlock =
-    state.embeddingEnabled && state.openaiKey
-      ? `\nembedding:\n  enabled: true\n  model: "text-embedding-3-small"\n  dimensions: 1536\n`
-      : "";
 
   const configContent = `bot:
   name: "JustDoBot"
@@ -523,7 +508,7 @@ streaming:
 logging:
   level: "info"
   format: "${state.loggingFormat}"
-${embeddingBlock}
+
 vault:
   enabled: ${state.vaultEnabled}
   type: "obsidian"
@@ -562,8 +547,8 @@ export function initializeDatabase(state: WizardState): void {
   db.exec(STAGE6_DDL_CORE);
   if (state.sqliteVecAvailable) {
     sqliteVec.load(db);
-    db.exec(STAGE2_DDL_VEC);
-    db.exec(STAGE3_DDL_VEC);
+    db.exec(stage2VecDDL(768));
+    db.exec(stage3VecDDL(768));
   }
   db.close();
 }

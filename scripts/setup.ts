@@ -1,6 +1,7 @@
 import { existsSync } from "node:fs";
 import { createInterface } from "node:readline";
 import { GoogleOAuthClient } from "../src/plugins/collectors/google/oauth";
+import { type DoctorCheck, runDiagnostics } from "./doctor";
 import {
   checkEnvironment,
   finalize,
@@ -148,12 +149,11 @@ async function askYesNo(question: string, defaultVal: boolean): Promise<boolean>
 function initVisited(state: WizardState): Set<number> {
   const visited = new Set<number>();
   if (state.telegramToken && state.allowedUserId) visited.add(1);
-  if (state.embeddingEnabled || state.openaiKey) visited.add(2);
-  if (state.vaultEnabled || state.vaultPath) visited.add(3);
-  if (state.voiceSttEnabled || state.geminiApiKey) visited.add(4);
-  if (state.proactiveEnabled || state.googleEnabled) visited.add(5);
-  if (state.codeAgentEnabled) visited.add(6);
-  if (state.loggingFormat) visited.add(7);
+  if (state.vaultEnabled || state.vaultPath) visited.add(2);
+  if (state.voiceSttEnabled || state.geminiApiKey) visited.add(3);
+  if (state.proactiveEnabled || state.googleEnabled) visited.add(4);
+  if (state.codeAgentEnabled) visited.add(5);
+  if (state.loggingFormat) visited.add(6);
   return visited;
 }
 
@@ -171,21 +171,20 @@ async function showMenu(visited: Set<number>): Promise<number> {
   └────────────────────────────────────────┘
 
   1. Telegram + AI + Language    [${s(1)}]
-  2. Semantic Search              [${s(2)}]
-  3. Obsidian Vault               [${s(3)}]
-  4. Voice Messages               [${s(4)}]
-  5. Proactive + Google           [${s(5)}]
-  6. Code Agent                   [${s(6)}]
-  7. Logging & Advanced           [${s(7)}]
+  2. Obsidian Vault               [${s(2)}]
+  3. Voice Messages               [${s(3)}]
+  4. Proactive + Google           [${s(4)}]
+  5. Code Agent                   [${s(5)}]
+  6. Logging & Advanced           [${s(6)}]
   ────────────────────────────────────────
-  8. Configure All
-  9. Save & Finish
+  7. Configure All
+  8. Save & Finish
   0. Exit without saving
 `);
 
-  const input = await ask("  Choose (0-9): ");
+  const input = await ask("  Choose (0-8): ");
   const num = parseInt(input.trim(), 10);
-  if (Number.isNaN(num) || num < 0 || num > 9) return -1;
+  if (Number.isNaN(num) || num < 0 || num > 8) return -1;
   return num;
 }
 
@@ -291,43 +290,7 @@ async function configureTelegramAndModel(state: WizardState): Promise<void> {
   console.log(`\n  Model: ${state.model}, Language: ${state.language}, TZ: ${state.timezone}`);
 }
 
-// ─── Section 2: Semantic Search ──────────────────────────────────
-
-async function configureSemanticSearch(state: WizardState): Promise<void> {
-  console.log("\n  --- Semantic Search ---\n");
-
-  if (!state.sqliteVecAvailable) {
-    console.log("  sqlite-vec not available — keyword matching only.");
-    console.log("  Fix: brew install sqlite && bun run setup\n");
-    state.embeddingEnabled = false;
-    await ask("  Press Enter to continue...");
-    return;
-  }
-
-  console.log("  Improves memory/vault retrieval using OpenAI embeddings.");
-  console.log("  Requires an OpenAI API key (~$0.02 per 1M tokens).\n");
-
-  state.embeddingEnabled = await askYesNo("  Enable semantic search?", state.embeddingEnabled);
-
-  if (state.embeddingEnabled) {
-    const keyPrompt = state.openaiKey
-      ? `  OpenAI API key [${mask(state.openaiKey)}]: `
-      : "  OpenAI API key: ";
-    const keyInput = await ask(keyPrompt);
-    if (keyInput.trim()) state.openaiKey = keyInput.trim();
-
-    if (!state.openaiKey) {
-      console.log("  No key provided — disabling semantic search.");
-      state.embeddingEnabled = false;
-    } else {
-      console.log("  Embedding: enabled (text-embedding-3-small)");
-    }
-  } else {
-    console.log("  Semantic search: disabled");
-  }
-}
-
-// ─── Section 3: Obsidian Vault ───────────────────────────────────
+// ─── Section 2: Obsidian Vault ───────────────────────────────────
 
 async function configureVault(state: WizardState): Promise<void> {
   console.log("\n  --- Obsidian Vault ---\n");
@@ -393,15 +356,10 @@ async function configureVault(state: WizardState): Promise<void> {
     state.vaultExclude = [];
   }
 
-  // Note about embedding
-  if (!state.embeddingEnabled) {
-    console.log("\n  Note: without semantic search, vault uses keyword matching only.");
-  }
-
   console.log("\n  Vault: enabled");
 }
 
-// ─── Section 4: Voice Messages ───────────────────────────────────
+// ─── Section 3: Voice Messages ───────────────────────────────────
 
 async function configureVoice(state: WizardState): Promise<void> {
   console.log("\n  --- Voice Messages ---\n");
@@ -438,7 +396,7 @@ async function configureVoice(state: WizardState): Promise<void> {
     "1": "elevenlabs",
     "2": "gemini",
   };
-  const currentTts = state.voiceTtsType === "gemini" ? "2" : "1";
+  const currentTts = state.voiceTtsType === "elevenlabs" ? "1" : "2";
   const ttsInput = await ask(`  Choose (1/2) [${currentTts}]: `);
   if (ttsMap[ttsInput.trim()]) state.voiceTtsType = ttsMap[ttsInput.trim()];
 
@@ -467,7 +425,7 @@ async function configureVoice(state: WizardState): Promise<void> {
   console.log(`\n  Voice: enabled (STT: Gemini, TTS: ${state.voiceTtsType})`);
 }
 
-// ─── Section 5: Proactive + Google ───────────────────────────────
+// ─── Section 4: Proactive + Google ───────────────────────────────
 
 async function configureProactive(state: WizardState): Promise<void> {
   console.log("\n  --- Proactive Check-ins ---\n");
@@ -497,6 +455,16 @@ async function configureProactive(state: WizardState): Promise<void> {
       else console.log("  Invalid value, keeping current.");
     }
 
+    // Reminder cooldown
+    const reminderCooldownInput = await ask(
+      `  Goal reminder cooldown in minutes (30-1440) [${state.reminderCooldown}]: `,
+    );
+    if (reminderCooldownInput.trim()) {
+      const val = parseInt(reminderCooldownInput.trim(), 10);
+      if (val >= 30 && val <= 1440) state.reminderCooldown = val;
+      else console.log("  Invalid value, keeping current.");
+    }
+
     // Quiet hours
     console.log("\n  Quiet hours — no proactive messages during this period.");
     const qStartInput = await ask(`  Quiet hours start (HH:MM) [${state.quietHoursStart}]: `);
@@ -511,7 +479,8 @@ async function configureProactive(state: WizardState): Promise<void> {
 
     console.log(
       `\n  Proactive: enabled (every ${state.proactiveInterval}min, ` +
-        `cooldown ${state.proactiveCooldown}min, quiet ${state.quietHoursStart}-${state.quietHoursEnd})`,
+        `cooldown ${state.proactiveCooldown}min, reminder cooldown ${state.reminderCooldown}min, ` +
+        `quiet ${state.quietHoursStart}-${state.quietHoursEnd})`,
     );
   } else {
     console.log("  Proactive check-ins: disabled");
@@ -568,7 +537,7 @@ async function configureProactive(state: WizardState): Promise<void> {
   }
 }
 
-// ─── Section 6: Code Agent ───────────────────────────────────────
+// ─── Section 5: Code Agent ───────────────────────────────────────
 
 async function configureCodeAgent(state: WizardState): Promise<void> {
   console.log("\n  --- Code Agent ---\n");
@@ -643,7 +612,7 @@ async function configureCodeAgent(state: WizardState): Promise<void> {
   );
 }
 
-// ─── Section 7: Logging & Advanced ──────────────────────────────
+// ─── Section 6: Logging & Advanced ──────────────────────────────
 
 async function configureLogging(state: WizardState): Promise<void> {
   console.log("\n  --- Logging & Advanced ---\n");
@@ -660,13 +629,24 @@ async function configureLogging(state: WizardState): Promise<void> {
 
 // ─── Finalize ────────────────────────────────────────────────────
 
-function finalizeAndReport(state: WizardState): boolean {
+function formatCheck(c: DoctorCheck): string {
+  const tags: Record<string, string> = {
+    ok: "\x1b[32m[OK]\x1b[0m  ",
+    warn: "\x1b[33m[WARN]\x1b[0m",
+    fail: "\x1b[31m[FAIL]\x1b[0m",
+    skip: "\x1b[90m[SKIP]\x1b[0m",
+  };
+  return `  ${tags[c.status]} ${c.name}: ${c.message}`;
+}
+
+async function finalizeAndReport(state: WizardState): Promise<boolean> {
   if (!state.telegramToken || !state.allowedUserId) {
     console.log("\n  Telegram token and user ID are required.");
     console.log("  Please configure section 1 first.\n");
     return false;
   }
 
+  // 1. Save config
   const ok = finalize(state);
   if (!ok) return false;
 
@@ -675,22 +655,60 @@ function finalizeAndReport(state: WizardState): boolean {
   console.log("  data/ directory ready");
   console.log(`  SQLite initialized (Stage 3${state.sqliteVecAvailable ? " + vectors" : ""})`);
 
-  if (state.googleEnabled && !existsSync("./data/google-tokens.json")) {
-    console.log("\n  Google OAuth is not completed yet.");
-    console.log("  Re-run setup and complete Google authorization in Section 5.");
+  // 2. Run diagnostics
+  console.log("\n  Running diagnostics...\n");
+  const checks = await runDiagnostics();
+  for (const c of checks) console.log(formatCheck(c));
+
+  const errors = checks.filter((c) => c.status === "fail").length;
+  const passed = checks.filter((c) => c.status === "ok").length;
+  const warnings = checks.filter((c) => c.status === "warn").length;
+  console.log(
+    `\n  ${passed} passed${warnings ? `, ${warnings} warnings` : ""}${errors ? `, ${errors} errors` : ""}`,
+  );
+
+  if (errors > 0) {
+    console.log("\n  Fix the errors above and re-run setup.\n");
+    return false;
   }
 
-  if (!state.claudeCliAvailable) {
-    console.log("\n  WARNING: Claude CLI was not detected.");
-    console.log("  The bot WILL NOT work without it.");
-    console.log("  Install: npm install -g @anthropic-ai/claude-code && claude login");
-  }
+  console.log("\n  Setup complete!");
 
-  console.log("\n  Setup complete!\n");
-  console.log("  Run the bot:");
-  console.log("    bun run dev          — development (hot reload)");
-  console.log("    bun run start        — production");
-  console.log("    bun run docker       — Docker (recommended)\n");
+  // 3. Ask about Docker launch
+  const dockerCheck = Bun.spawnSync(["docker", "info"], {
+    stdout: "pipe",
+    stderr: "pipe",
+    timeout: 5000,
+  });
+  if (dockerCheck.exitCode === 0) {
+    const launch = await askYesNo(
+      "\n  Launch the bot in Docker? (first launch may take a couple of minutes)",
+      true,
+    );
+    if (launch) {
+      console.log("\n  Building and starting...\n");
+      const proc = Bun.spawnSync(["bun", "run", "docker:build"], {
+        stdout: "inherit",
+        stderr: "inherit",
+      });
+      if (proc.exitCode === 0) {
+        console.log("\n  Bot is running! Check your Telegram.\n");
+        console.log("  To stop:     bun run docker-stop");
+        console.log("  To restart:  bun run docker\n");
+      } else {
+        console.log("\n  Docker launch failed. Start manually:");
+        console.log("    bun run docker:build\n");
+      }
+    } else {
+      const cwd = process.cwd();
+      console.log("\n  To launch later:");
+      console.log(`    cd ${cwd} && bun run docker\n`);
+    }
+  } else {
+    const cwd = process.cwd();
+    console.log(`\n  To start the bot:`);
+    console.log(`    cd ${cwd} && bun run start\n`);
+  }
 
   return true;
 }
@@ -700,18 +718,16 @@ function finalizeAndReport(state: WizardState): boolean {
 async function configureAll(state: WizardState, visited: Set<number>): Promise<void> {
   await configureTelegramAndModel(state);
   visited.add(1);
-  await configureSemanticSearch(state);
-  visited.add(2);
   await configureVault(state);
-  visited.add(3);
+  visited.add(2);
   await configureVoice(state);
-  visited.add(4);
+  visited.add(3);
   await configureProactive(state);
-  visited.add(5);
+  visited.add(4);
   await configureCodeAgent(state);
-  visited.add(6);
+  visited.add(5);
   await configureLogging(state);
-  visited.add(7);
+  visited.add(6);
 }
 
 // ─── Main ────────────────────────────────────────────────────────
@@ -764,7 +780,7 @@ async function main() {
     const runAll = await askYesNo("  Run full setup?", true);
     if (runAll) {
       await configureAll(state, visited);
-      finalizeAndReport(state);
+      await finalizeAndReport(state);
       rl.close();
       return;
     }
@@ -781,34 +797,30 @@ async function main() {
         visited.add(1);
         break;
       case 2:
-        await configureSemanticSearch(state);
+        await configureVault(state);
         visited.add(2);
         break;
       case 3:
-        await configureVault(state);
+        await configureVoice(state);
         visited.add(3);
         break;
       case 4:
-        await configureVoice(state);
+        await configureProactive(state);
         visited.add(4);
         break;
       case 5:
-        await configureProactive(state);
+        await configureCodeAgent(state);
         visited.add(5);
         break;
       case 6:
-        await configureCodeAgent(state);
+        await configureLogging(state);
         visited.add(6);
         break;
       case 7:
-        await configureLogging(state);
-        visited.add(7);
-        break;
-      case 8:
         await configureAll(state, visited);
         break;
-      case 9:
-        if (finalizeAndReport(state)) {
+      case 8:
+        if (await finalizeAndReport(state)) {
           running = false;
         }
         break;

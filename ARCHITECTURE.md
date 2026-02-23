@@ -24,7 +24,7 @@ JustDoBot/
 │   │
 │   ├── locales/                     # Bot response translations (15 languages)
 │   │   ├── index.ts               # createTranslator(), Translator type, LANGUAGE_NAMES
-│   │   ├── en.json                # English — source of truth (~112 keys)
+│   │   ├── en.json                # English — source of truth (~126 keys)
 │   │   ├── ru.json                # Russian
 │   │   ├── ar.json                # Arabic
 │   │   ├── zh.json                # Chinese (Simplified)
@@ -125,8 +125,8 @@ JustDoBot/
 │   │   │   ├── ndjson-parser.ts    # NDJSON stream parser for Claude Code output
 │   │   │   └── mcp-code-task.ts    # MCP tool: start_coding_task
 │   │   │
-│   │   └── embeddings/openai/
-│   │       └── index.ts            # OpenAI text-embedding-3-small provider
+│   │   └── embeddings/local/
+│   │       └── index.ts            # Local EmbeddingGemma-300m Q4 ONNX provider (@huggingface/transformers)
 │   │
 │   └── types/
 │       ├── pdf-parse.d.ts
@@ -171,15 +171,16 @@ JustDoBot/
 ├── scripts/
 │   ├── setup.ts                       # Interactive terminal setup wizard
 │   ├── setup-core.ts                  # Shared setup logic (validation, generation, DB init)
-│   ├── docker-start.ts                # Docker entry helper: detect Claude creds, save, compose up --build
+│   ├── docker-start.ts                # Docker entry: refresh credentials + compose up (--build optional)
 │   ├── web-setup.ts                   # Web setup panel — Bun HTTP server (port 19380)
 │   ├── web-setup.html                 # Web setup panel — HTML markup (6-step wizard)
 │   ├── web-setup.css                  # Web setup panel — styles (dark theme)
 │   ├── web-setup.js                   # Web setup panel — client JS (i18n, navigation, API calls)
-│   ├── doctor.ts                      # Diagnostics: 12 base checks (14 with Code Agent enabled)
+│   ├── doctor.ts                      # Diagnostics: 11 base checks (13 with Code Agent enabled)
 │   ├── re-embed.ts                    # Backfill embeddings for existing data
+│   ├── download-model.ts              # Pre-download embedding model for offline/faster startup
 │   └── i18n/                          # Setup wizard translations (15 languages)
-│       ├── en.json                    # English — source of truth (~193 keys)
+│       ├── en.json                    # English — source of truth (~189 keys)
 │       ├── ru.json                    # Russian
 │       ├── zh.json                    # Chinese (Simplified)
 │       ├── es.json                    # Spanish
@@ -225,7 +226,7 @@ IPlugin { name, version, init(config), destroy(), healthCheck() }
     ├── ICollector         — collect(), type (email/calendar/goals/vault/custom)
     ├── ISTTProvider       — transcribe(audio, format, language?)
     ├── ITTSProvider       — synthesize(text, language?)
-    └── ICodeExecutor      — runTaskInBackground(), cancelTask(), project CRUD
+    └── ICodeExecutor      — runTaskInBackground(), cancelTask(), project CRUD, healthCheck(), startHealthMonitor(), checkSandboxImage()
 ```
 
 `PluginRegistry` manages lifecycle:
@@ -468,11 +469,20 @@ quiet_mode (
 )
 ```
 
-**Vectors (sqlite-vec, optional)**
+**Bot Metadata (internal state)**
 ```sql
-vec_memories (memory_id INTEGER PK, embedding float[1536])
-vec_goals    (goal_id INTEGER PK,   embedding float[1536])
-vec_vault    (doc_id INTEGER PK,    embedding float[1536])
+bot_metadata (
+  key           TEXT PRIMARY KEY,
+  value         TEXT
+)
+```
+Tracks internal state like current embedding dimensions for migration detection.
+
+**Vectors (sqlite-vec, auto-enabled when available)**
+```sql
+vec_memories (memory_id INTEGER PK, embedding float[768])
+vec_goals    (goal_id INTEGER PK,   embedding float[768])
+vec_vault    (doc_id INTEGER PK,    embedding float[768])
 ```
 
 ---
@@ -513,7 +523,7 @@ For each .md file:
   ├── MD5 hash → skip if unchanged (incremental)
   ├── Chunk: split by ## headers, then paragraphs if >1500 chars
   │          200-char overlap between chunks
-  ├── Embed: embedBatch() via OpenAI (if available)
+  ├── Embed: embedBatch() via local EmbeddingGemma-300m
   └── Upsert: vault_documents + fts_vault + vec_vault
 ```
 
@@ -620,6 +630,7 @@ Native tools (`npm`, `pip`, `curl`, `git`) respect `HTTP_PROXY` env var directly
 | Project name regex | `^[a-z0-9][a-z0-9-]{0,30}[a-z0-9]$` | No path traversal |
 | Workspace disk guard | `du -sm` check before each task | Bind mount won't fill host disk |
 | Crash recovery | Reset stuck "running" projects on init | No zombie projects |
+| Auto-recovery | Health monitor tries `startSandboxStack()` before alerting users | Resilient container management |
 
 ### Docker-in-Docker (DinD) Considerations
 
@@ -628,6 +639,7 @@ Docker socket. Volume paths must reference the **host filesystem**, not the bot 
 
 - `WORKSPACE_HOST_PATH` — host path for workspace bind mount (default: `${PWD}/workspace`)
 - `DATA_HOST_PATH` — host path for data dir (squid.conf mount) (default: `${PWD}/data`)
+- `PROJECT_HOST_PATH` — host path for project directory, used in restart commands sent to users (default: `${PWD}`)
 - `workspaceLocalPath` — container-local path for file I/O (always `./workspace`)
 - Credential copy uses `docker exec -i -u 0` with stdin pipe (not `docker cp`) to handle UID mismatch
 - Named volume `justdobot-claude-data` ownership fixed via `chown 1000:1000` on init
@@ -637,7 +649,19 @@ Docker socket. Volume paths must reference the **host filesystem**, not the bot 
 Code executor is initialized **after** `registry.initAll()` in a separate try/catch.
 If sandbox setup fails (no Docker, no credentials, etc.), the bot continues working
 normally — Code Agent feature is simply disabled. A startup notification is sent to
-all allowed users via Telegram explaining the error.
+all allowed users via Telegram explaining the error with a full restart command
+(`cd <PROJECT_HOST_PATH> && docker compose restart bot`).
+
+### Container Health Monitoring
+
+A periodic health monitor runs every 5 minutes after successful Code Agent init:
+
+1. `healthCheck()` returns `ContainerHealthStatus` — per-container status (sandbox, proxy) + running task count
+2. On transition healthy→unhealthy: attempt auto-recovery via `startSandboxStack()` first
+3. If recovery succeeds — log and notify users (`code.containerRecovered`)
+4. If recovery fails — notify users with error details and restart command (`code.containerDown`)
+5. On transition unhealthy→healthy: notify users (no spam on same-state checks)
+6. `stopHealthMonitor()` called during graceful shutdown before `destroy()`
 
 ### Delegation Pattern
 
@@ -752,7 +776,7 @@ bun run web-setup
 Bun HTTP server on port 19380 (auto-increments if busy). Serves a 6-step SPA wizard:
 1. **Essentials** — Telegram token (with API validation), User ID, language
 2. **AI Model** — Sonnet / Opus / Haiku card selector
-3. **Optional** — Semantic search (OpenAI), Obsidian vault, Voice (STT/TTS)
+3. **Optional** — Obsidian vault, Voice (STT/TTS)
 4. **Proactive** — Check-in toggle, interval/cooldown/quiet hours, Google OAuth
 5. **Code Agent** — Enable toggle, model choice, max turns, timeout
 6. **Save & Run** — Pre-save validation, config summary, diagnostics
@@ -783,10 +807,10 @@ Claude Docker auth helpers also live here:
 ```bash
 bun run doctor
 ```
-12 base checks: Bun, Claude CLI, config.yaml (Zod), .env, TELEGRAM_BOT_TOKEN, ALLOWED_USER_ID,
-Database (row counts), sqlite-vec, Telegram API, OpenAI API, Vault path,
+11 base checks: Bun, Claude CLI, config.yaml (Zod), .env, TELEGRAM_BOT_TOKEN, ALLOWED_USER_ID,
+Database (row counts), sqlite-vec, Telegram API, Vault path,
 Docker availability.
-With Code Agent enabled, 2 additional checks run: sandbox image and Claude credentials (14 total).
+With Code Agent enabled, 2 additional checks run: sandbox image and Claude credentials (13 total).
 Exit code 1 if any check fails. Also available via web panel (`/api/doctor`).
 
 ---
@@ -839,11 +863,9 @@ backup:
   enabled: false
   dir: "./backups"
 
-# Optional — enabled via setup wizard
-embedding:
-  enabled: true
-  model: "text-embedding-3-small"
-  dimensions: 1536
+# Embedding model cache directory (auto-downloaded on first run)
+# embedding:
+#   cache_dir: "./data/models"
 
 # Optional — Obsidian vault integration (configured via setup wizard)
 vault:
@@ -860,6 +882,7 @@ proactive:
   enabled: false
   check_interval_minutes: 5      # How often to collect data and decide
   cooldown_minutes: 15           # Minimum minutes between proactive messages
+  reminder_cooldown_minutes: 180 # Minimum minutes between reminders for the same goal
   defer_minutes: 5               # Retry delay when queue is busy
   quiet_hours:
     start: "22:00"               # No proactive messages from...
@@ -872,7 +895,7 @@ voice:
     type: "gemini"               # Gemini 2.5 Flash
   tts:
     enabled: false
-    type: "elevenlabs"           # elevenlabs or gemini
+    type: "gemini"               # gemini or elevenlabs
     auto_reply: true             # Auto-send voice reply to voice messages
     max_text_length: 4000        # Truncate text before TTS
   twilio:
@@ -930,7 +953,7 @@ en, ru, ar, zh, de, es, fr, hi, it, ja, ko, pl, pt, tr, uk
 All user-facing bot strings are localized via a `Translator` function.
 
 **Architecture:**
-- Flat JSON files in `src/locales/` — `en.json` is source of truth (~112 keys), other files mirror its structure
+- Flat JSON files in `src/locales/` — `en.json` is source of truth (~126 keys), other files mirror its structure
 - Key format: `"section.element"` (e.g. `"cmd.start.greeting"`, `"error.auth"`, `"streaming.thinking"`)
 - Dynamic values via `{variable}` placeholders (e.g. `"Hello! I'm {botName}"`)
 - `createTranslator(lang)` returns a `Translator` closure with English fallback for missing keys
@@ -950,7 +973,8 @@ All user-facing bot strings are localized via a `Translator` function.
 - `cmd.goals.*`, `cmd.memory.*`, `cmd.forget.*` — data management
 - `cmd.vault.*`, `cmd.note.*`, `cmd.reindex.*`, `cmd.backup.*` — vault commands
 - `cmd.quiet.*` — quiet mode command responses
-- `cmd.status.*` — /status command responses
+- `cmd.status.*` — /status command responses (uptime, plugins, per-container sandbox/proxy status)
+- `code.*` — Code Agent status and errors (startup, container health, project actions)
 - `cmd.help.quiet`, `cmd.help.status`, `cmd.help.voice` — help texts
 - `streaming.*` — "Thinking...", "Cancelled"
 - `media.*` — file processing errors
@@ -966,7 +990,7 @@ All user-facing bot strings are localized via a `Translator` function.
 The web setup panel has its own independent translation system:
 
 **Architecture:**
-- Flat JSON files in `scripts/i18n/` — `en.json` is source of truth (~193 keys), other files mirror its structure
+- Flat JSON files in `scripts/i18n/` — `en.json` is source of truth (~189 keys), other files mirror its structure
 - Key format: `"section.element.property"` (e.g. `"step1.token.label"`, `"error.save.failed"`)
 - Dynamic values via `{variable}` placeholders (e.g. `"Valid! Bot: @{username}"`)
 - English is injected at serve time into `app.js` (zero-latency), other languages fetched via `GET /api/lang/:code` and cached client-side
@@ -1012,6 +1036,7 @@ SIGTERM/SIGINT received
   ├── queue.drain(15s timeout)      ← wait for in-flight messages
   ├── aiEngine.abort()              ← cancel running queries (if drain times out)
   ├── database.flush()              ← WAL checkpoint
+  ├── codeExecutor.stopHealthMonitor() ← stop periodic health checks (if enabled)
   ├── codeExecutor.destroy()        ← stop sandbox containers (if enabled)
   └── registry.destroyAll()         ← reverse-order plugin cleanup
 ```
@@ -1030,7 +1055,7 @@ SIGTERM/SIGINT received
 | `/memory [query]`   | List or search memories                      |
 | `/forget <id>`      | Delete memory by ID (soft delete)            |
 | `/backup`           | Full backup: JSON export + SQLite copy       |
-| `/status`           | Bot uptime, stats, plugin health             |
+| `/status`           | Bot uptime, stats, plugin health, Code Agent container details |
 | `/vault [query]`    | Show vault stats or search vault documents   |
 | `/note <text>`      | Create new note in Temp Notes/ folder        |
 | `/reindex`          | Trigger full vault reindexation              |
@@ -1102,11 +1127,14 @@ Formatter: 2-space indent, 100-char line width, double quotes, semicolons.
 
 | Script           | Command              | Purpose                                       |
 |-----------------|----------------------|-----------------------------------------------|
-| `docker-start.ts` | `bun run docker` / `bun run docker-start` | Refresh Claude credentials + `docker compose up -d --build` |
+| `docker-start.ts` | `bun run docker` | Refresh Claude credentials + `docker compose up -d` (start/restart) |
+| — | `bun run docker:build` | Same as above + `--build` (rebuild image) |
+| — | `bun run docker-stop` | `docker compose down` |
 | `web-setup.ts`   | `bun run web-setup`  | Web setup panel on port 19380 (primary setup)  |
 | `setup.ts`       | `bun run setup`      | Interactive terminal wizard (alternative)      |
-| `doctor.ts`      | `bun run doctor`     | Run 12 base checks (14 with Code Agent)      |
+| `doctor.ts`      | `bun run doctor`     | Run 11 base checks (13 with Code Agent)      |
 | `re-embed.ts`    | `bun run scripts/re-embed.ts` | Backfill embeddings for memories/goals without vectors |
+| `download-model.ts` | `bun run download-model` | Pre-download embedding model (~200 MB)       |
 | `backup.ts`      | `bun run backup`     | Full backup: JSON export (memories, goals, stats) + SQLite copy |
 | —                | `bun run check`      | Typecheck + lint in one command                |
 | —                | `bun run lint`       | Biome lint only                                |
