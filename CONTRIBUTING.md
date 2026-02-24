@@ -21,9 +21,10 @@ bun run web-setup   # opens setup wizard at http://localhost:19380
 
 ```bash
 bun run dev         # start with --watch (auto-restart on changes)
-bun test            # run all 253 tests
+bun test            # run all tests
 bun run typecheck   # TypeScript strict mode check
 bun run lint        # Biome linter
+bun run check-i18n  # i18n key consistency across all locales
 bun run check       # typecheck + lint combined
 bun run doctor      # diagnostics (config, DB, Docker, etc.)
 ```
