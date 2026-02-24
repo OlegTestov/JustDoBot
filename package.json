@@ -22,6 +22,7 @@
     "typecheck": "tsc --noEmit",
     "lint": "biome check ./src ./tests ./scripts",
     "lint:fix": "biome check --write ./src ./tests ./scripts",
+    "check-i18n": "bun run scripts/check-i18n.ts",
     "check": "tsc --noEmit && biome check ./src ./tests ./scripts",
     "healthcheck": "bun run src/healthcheck.ts",
     "backup": "bun run scripts/backup.ts",

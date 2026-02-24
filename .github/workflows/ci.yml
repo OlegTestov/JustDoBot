@@ -25,5 +25,8 @@ jobs:
       - name: Lint
         run: bun run lint
 
+      - name: i18n consistency
+        run: bun run check-i18n
+
       - name: Test
         run: bun test

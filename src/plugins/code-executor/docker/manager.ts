@@ -64,7 +64,8 @@ export async function pullImage(image: string): Promise<void> {
   if (await checkImageExists(image)) return;
   logger.info({ image }, "Pulling image...");
   const { exitCode } = await dockerRun(["pull", image], { timeoutMs: 300_000 });
-  if (exitCode !== 0) logger.warn({ image }, "docker pull failed — build may still succeed if cached");
+  if (exitCode !== 0)
+    logger.warn({ image }, "docker pull failed — build may still succeed if cached");
 }
 
 /** Build sandbox image from Dockerfile */
